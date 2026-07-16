@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - TECNOLOGY CENTER</title>
+    <style>
+        /* Diseño Oscuro Premium e Inteligente - Carga instantánea */
+        body { background-color: #0f172a; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #f8fafc; }
+        
+        .login-contenedor { background-color: #1e293b; padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border-bottom: 4px solid #38bdf8; box-sizing: border-box; text-align: center; }
+        
+        .login-titulo h2 { color: #38bdf8; margin: 0 0 5px 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; }
+        .login-titulo p { color: #64748b; margin: 0 0 30px 0; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+        
+        .grupo-formulario { margin-bottom: 20px; text-align: left; }
+        .grupo-formulario label { display: block; color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        
+        /* Cajas de texto estilizadas */
+        .grupo-formulario input { width: 100%; background-color: #0f172a; border: 2px solid #334155; padding: 12px 16px; border-radius: 8px; color: white; font-size: 14px; font-weight: 600; box-sizing: border-box; transition: 0.2s; }
+        .grupo-formulario input:focus { border-color: #38bdf8; outline: none; box-shadow: 0 0 0 3px rgba(56,189,248,0.2); }
+        
+        /* Botón de ingreso premium */
+        .btn-ingresar { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: none; width: 100%; padding: 14px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; margin-top: 15px; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; }
+        .btn-ingresar:hover { background: linear-gradient(135deg, #60a5fa, #2563eb); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+        
+        .error-alerta { background-color: rgba(239,68,68,0.15); border: 1px solid #ef4444; color: #fca5a5; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div class="login-contenedor">
+        <div class="login-titulo">
+            <h2>🛠️ SISTEMA CONTROL-PRO 1.0</h2>
+            <p>TECNOLOGY CENTER</p>
+        </div>
+
+        <!-- Alerta visual si las contraseñas son incorrectas -->
+        {% if error_login %}
+            <div class="error-alerta">
+                ⚠️ Usuario o contraseña incorrectos. Por favor, verifique sus datos.
+            </div>
+        {% endif %}
+
+        <form method="POST">
+            <!-- CORREGIDO: Se coloco la etiqueta de seguridad limpia y nativa de Django -->
+            {% csrf_token %}
+            <div class="grupo-formulario">
+                <label for="username">Usuario Administrador / Técnico</label>
+                <input type="text" name="username" id="username" placeholder="Escribe tu usuario" required>
+            </div>
+
+            <div class="grupo-formulario">
+                <label for="password">Contraseña de Acceso</label>
+                <input type="password" name="password" id="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-ingresar">Entrar al Sistema</button>
+        </form>
+    </div>
+
+</body>
+</html>

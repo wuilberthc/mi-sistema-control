@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Presupuesto #{{ presupuesto.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 30px; font-size: 14px; line-height: 1.4; }
+        .zona-botones { background: #f1f1f1; padding: 10px; margin: -30px -30px 30px -30px; text-align: center; }
+        .btn { background: #28a745; color: white; border: none; padding: 8px 20px; font-weight: bold; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        
+        /* Estructura del Documento */
+        .encabezado { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .datos-empresa { width: 60%; }
+        .datos-documento { width: 35%; text-align: right; }
+        .titulo-documento { font-size: 22px; font-weight: bold; color: #111; margin: 0 0 5px 0; }
+        
+        .seccion-cliente { background: #f9f9f9; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 25px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+        th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .text-right { text-align: right; }
+        
+        .total-contenedor { display: flex; justify-content: flex-end; margin-top: 20px; }
+        .tabla-totales { width: 320px; margin-bottom: 0; border: 1px solid #ccc; background: #f9f9f9; border-radius: 4px; border-collapse: collapse; }
+        .tabla-totales td { padding: 8px; border-bottom: 1px solid #ddd; }
+
+        @media print {
+            .zona-botones { display: none !important; }
+            body { padding: 0; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barra de Herramientas Superior -->
+    <div class="zona-botones">
+        <button onclick="window.print();" class="btn">🖨️ Mandar a Imprimir / Guardar como PDF</button>
+    </div>
+
+    <!-- Encabezado con Logotipo Dinamico -->
+    <div class="encabezado">
+        <div class="datos-empresa" style="display: flex; gap: 20px; align-items: center;">
+            {% if empresa.logo %}
+                <img src="{{ empresa.logo.url }}" alt="Logo" style="max-height: 80px; max-width: 180px; object-fit: contain;">
+            {% endif %}
+            <div>
+                <h2 style="margin: 0 0 5px 0; color: #004085;">{{ empresa.nombre_comercial|default:"Mi Empresa S.A." }}</h2>
+                <p style="margin: 2px 0;"><strong>Doc. Fiscal:</strong> {{ empresa.identificacion_fiscal|default:"Rif / Nit" }}</p>
+                <p style="margin: 2px 0;"><strong>Telefono:</strong> {{ empresa.telefono|default:"-" }}</p>
+                <p style="margin: 2px 0; font-size: 12px;"><strong>Direccion:</strong> {{ empresa.direccion|default:"-" }}</p>
+            </div>
+        </div>
+        <div class="datos-documento">
+            <div class="titulo-documento">PRESUPUESTO</div>
+            <p style="margin: 2px 0;"><strong>Numero:</strong> #{{ presupuesto.id }}</p>
+            <p style="margin: 2px 0;"><strong>Fecha:</strong> {{ presupuesto.fecha_creacion }}</p>
+            <p style="margin: 2px 0;"><strong>Estado:</strong> {{ presupuesto.get_estado_display }}</p>
+        </div>
+    </div>
+
+    <!-- Informacion del Cliente -->
+    <div class="seccion-cliente">
+        <h4 style="margin: 0 0 5px 0; color: #555;">DATOS DEL CLIENTE</h4>
+        <p style="margin: 2px 0;"><strong>Nombre:</strong> {{ presupuesto.cliente.nombre }}</p>
+        <p style="margin: 2px 0;"><strong>Telefono:</strong> {{ presupuesto.cliente.telefono|default:"No registrado" }}</p>
+    </div>
+
+    <!-- Tabla de Materiales y Servicios -->
+    <table>
+        <thead>
+            <tr>
+                <th>Descripcion del Material / Servicio</th>
+                <th class="text-right" style="width: 12%;">Cantidad</th>
+                <th class="text-right" style="width: 20%;">Precio Unitario (Neto)</th>
+                <th class="text-right" style="width: 20%;">Subtotal Item</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Pintamos la lista calculada impecable desde Python -->
+            {% for item in items_finales %}
+            <tr>
+                <td>{{ item.nombre }}</td>
+                <td class="text-right">{{ item.cantidad }}</td>
+                <td class="text-right">${{ item.precio_unitario }}</td>
+                <td class="text-right">${{ item.subtotal }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Bloque Final Desglosado Contable -->
+    <div class="total-contenedor">
+        <table class="tabla-totales">
+            <tr>
+                <td><strong>Subtotal (Base Neta):</strong></td>
+                <td class="text-right">${{ subtotal }}</td>
+            </tr>
+            <tr>
+                <td><strong>Impuesto (IVA 16%):</strong></td>
+                <td class="text-right" style="color: #dc3545;">+${{ iva }}</td>
+            </tr>
+            <tr style="font-size: 16px; background: #e2f0d9;">
+                <td style="border-top: 2px solid #333; padding: 10px;"><strong>TOTAL A PAGAR:</strong></td>
+                <td class="text-right" style="border-top: 2px solid #333; padding: 10px; color: #28a745; font-weight: bold;">
+                    ${{ total }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    {% if presupuesto.notas_adicionales %}
+    <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px;">
+        <strong>Condiciones y Notas del Servicio:</strong>
+        <p style="font-size: 12px; color: #555; white-space: pre-wrap;">{{ presupuesto.notas_adicionales }}</p>
+    </div>
+    {% endif %}
+
+</body>
+</html>

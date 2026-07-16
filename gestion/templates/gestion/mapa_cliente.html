@@ -1,0 +1,48 @@
+{% extends "admin/change_form.html" %}
+
+<!-- ESTO INYECTA EL MENÚ DE REPORTES ARRIBA EN EL PANEL DE ADMINISTRACIÓN -->
+{% block object-tools %}
+<ul class="object-tools">
+    <li>
+        <a href="/reporte-financiero/" class="viewsitelink" style="background: #004085 !important; color: white !important; font-weight: bold; padding: 10px 15px; border-radius: 4px; display: inline-block; margin-bottom: 10px;">
+            📊 Ver Reporte Financiero Completo
+        </a>
+    </li>
+    {% if has_absolute_url %}
+        <li><a href="{{ absolute_url }}" class="viewsitelink">Ver en el sitio</a></li>
+    {% endif %}
+</ul>
+{% endblock %}
+
+<!-- ESTO MANTIENE TU BOTÓN DEL MAPA GPS QUE YA FUNCIONABA -->
+{% block after_field_sets %}
+<div style="margin: 20px 40px; padding: 15px; background: #fff; border: 1px solid #ccc; border-radius: 4px; clear: both;">
+    <h3 style="margin-top: 0; color: #333; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;">📍 Control de Ubicacion GPS</h3>
+    <p style="font-size: 13px; color: #555;">
+        Para evitar los bloqueos de seguridad del navegador, haz clic en el boton de abajo para abrir el mapa interactivo en una pestaña nueva. Podrás buscar la dirección exacta, copiar las coordenadas y pegarlas en los cuadros de texto de arriba.
+    </p>
+    
+    <button type="button" id="btn-abrir-mapa-externo" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;">
+        🗺️ Abrir Mapa Interactivo en Pestaña Nueva
+    </button>
+</div>
+
+<script>
+    document.getElementById('btn-abrir-mapa-externo').addEventListener('click', function() {
+        var inputLat = document.getElementById('id_latitud');
+        var inputLon = document.getElementById('id_longitud');
+        
+        var lat = inputLat ? inputLat.value : '';
+        var lon = inputLon ? inputLon.value : '';
+        
+        var url;
+        if (lat && lon && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lon))) {
+            url = "https://openstreetmap.org" + lat + "&mlon=" + lon + "#map=16/" + lat + "/" + lon;
+        } else {
+            url = "https://openstreetmap.org";
+        }
+        
+        window.open(url, '_blank');
+    });
+</script>
+{% endblock %}

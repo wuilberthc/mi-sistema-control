@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Campo</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; color: #333; }
+        .barra { background-color: #222; color: white; padding: 15px; margin: -20px -20px 20px -20px; font-weight: bold; }
+        .tarjeta { background: white; border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .titulo { color: #0066cc; margin-top: 0; }
+        .estado { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; background: #eee; }
+        .campo { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="file"], textarea, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background-color: #28a745; color: white; border: none; padding: 10px 15px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+    <div class="barra">👷 Control de Obras en Campo</div>
+
+    <div class="contenedor">
+        <h3>Mis Trabajos Asignados</h3>
+
+        {% for trabajo in trabajos %}
+        <div class="tarjeta">
+            <h4 class="titulo">{{ trabajo.titulo }}</h4>
+            <p><span class="estado">{{ trabajo.get_estado_display }}</span></p>
+            <p><strong>Cliente:</strong> {{ trabajo.cliente.nombre }}</p>
+            <p><strong>Notas actuales:</strong><br>{{ trabajo.descripcion|linebreaks }}</p>
+            
+            <hr style="border: 0; border-top: 1px solid #eee;">
+            
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="trabajo_id" value="{{ trabajo.id }}">
+
+                <div class="campo">
+                    <label>Subir fotos del avance:</label>
+                    <input type="file" name="fotos_nuevas" accept="image/*" multiple>
+                </div>
+
+                <div class="campo">
+                    <label>Agregar nuevas notas o comentarios:</label>
+                    <textarea name="notas" rows="2" placeholder="Que se hizo hoy?"></textarea>
+                </div>
+
+                <div class="campo">
+                    <label>Cambiar Estado:</label>
+                    <select name="estado">
+                        <option value="PEND" {% if trabajo.estado == 'PEND' %}selected{% endif %}>Pendiente</option>
+                        <option value="PROG" {% if trabajo.estado == 'PROG' %}selected{% endif %}>En Progreso</option>
+                        <option value="TERM" {% if trabajo.estado == 'TERM' %}selected{% endif %}>Terminado</option>
+                    </select>
+                </div>
+
+                <button type="submit">Guardar Reporte de Avance</button>
+            </form>
+        </div>
+        {% empty %}
+        <p>No tienes trabajos asignados por el momento.</p>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

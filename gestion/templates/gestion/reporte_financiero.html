@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Balance Financiero de Obras</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 25px; background-color: #f8fafc; }
+        
+        .barra-titulo { background-color: #004085; color: white; padding: 15px 20px; border-radius: 6px; margin-bottom: 25px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-regresar { background-color: #007bff; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: bold; transition: 0.2s; border: 1px solid #0056b3; }
+        .btn-regresar:hover { background-color: #0056b3; transform: scale(1.02); }
+
+        .contenedor { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; color: #1e293b; }
+        
+        /* BARRA DE FILTROS ACTUALIZADA */
+        .barra-filtros { background-color: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 25px; display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; border: 1px solid #e2e8f0; }
+        .grupo-filtro { display: flex; flex-direction: column; gap: 5px; }
+        .grupo-filtro label { font-size: 11px; font-weight: bold; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        .grupo-filtro select, .grupo-filtro input[type="date"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; background-color: white; min-width: 160px; color: #334155; font-family: sans-serif; }
+        
+        .btn-filtrar { background-color: #1e293b; color: white; border: none; padding: 10px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-filtrar:hover { background-color: #0f172a; }
+        .btn-limpiar { background-color: #cbd5e1; color: #334155; text-decoration: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; font-size: 14px; text-align: center; box-sizing: border-box; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background-color: #f1f5f9; color: #475569; font-weight: bold; }
+        .text-right { text-align: right; }
+        
+        .ganancia-positiva { color: #16a34a; font-weight: bold; }
+        .ganancia-negativa { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="barra-titulo">
+        <span>📊 Panel Administrativo - Balance de Obras y Finanzas</span>
+        <a href="/" class="btn-regresar">🏠 Regresar al Menú</a>
+    </div>
+
+    <div class="contenedor">
+        <h2>Resumen de Operaciones</h2>
+
+        <!-- FORMULARIO DE FILTROS CON CAMPOS DE FECHA -->
+        <form method="GET" class="barra-filtros">
+            <div class="grupo-filtro">
+                <label for="filtro_cliente">Cliente:</label>
+                <select name="filtro_cliente" id="filtro_cliente">
+                    <option value="">-- Todos --</option>
+                    {% for c in clientes %}
+                        <option value="{{ c.id }}" {% if cliente_sel == c.id|stringformat:"i" %}selected{% endif %}>{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grupo-filtro">
+                <label for="filtro_estado">Estado:</label>
+                <select name="filtro_estado" id="filtro_estado">
+                    <option value="">-- Todos --</option>
+                    <option value="PEND" {% if estado_sel == "PEND" %}selected{% endif %}>Planificado</option>
+                    <option value="PROG" {% if estado_sel == "PROG" %}selected{% endif %}>En Progreso</option>
+                    <option value="TERM" {% if estado_sel == "TERM" %}selected{% endif %}>Terminado</option>
+                </select>
+            </div>
+
+            <!-- NUEVAS CASILLAS DE CALENDARIOS INTERACTIVOS -->
+            <div class="grupo-filtro">
+                <label for="fecha_desde">Desde la Fecha:</label>
+                <input type="date" name="fecha_desde" id="fecha_desde" value="{{ fecha_desde_sel }}">
+            </div>
+
+            <div class="grupo-filtro">
+                <label for="fecha_hasta">Hasta la Fecha:</label>
+                <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ fecha_hasta_sel }}">
+            </div>
+
+            <button type="submit" class="btn-filtrar">🔍 Filtrar</button>
+            <a href="/reporte-financiero/" class="btn-limpiar">🧼 Limpiar</a>
+        </form>
+
+        <!-- TABLA DE RESULTADOS CONTABLES -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha Ejecutado</th>
+                    <th>Obra / Trabajo</th>
+                    <th>Cliente</th>
+                    <th>Estado de Obra</th>
+                    <th class="text-right">Monto Cobrado</th>
+                    <th class="text-right">Gastos en Campo</th>
+                    <th class="text-right">Margen Ganancia Est.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if reportes %}
+                    {% for r in reportes %}
+                    <tr>
+                        <td><strong>{{ r.trabajo.fecha_inicio }}</strong></td>
+                        <td>{{ r.trabajo.titulo }}</td>
+                        <td>{{ r.trabajo.cliente.nombre }}</td>
+                        <td>{{ r.trabajo.get_estado_display }}</td>
+                        <td class="text-right">${{ r.monto_cobrado }}</td>
+                        <td class="text-right">${{ r.gastos_campo }}</td>
+                        <td class="text-right {% if r.ganancia_neta >= 0 %}ganancia-positiva{% else %}ganancia-negativa{% endif %}">
+                            ${{ r.ganancia_neta }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #94a3b8;">
+                            No se encontraron movimientos financieros en el rango seleccionado.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

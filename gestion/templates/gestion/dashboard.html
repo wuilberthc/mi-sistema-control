@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TECNOLOGY CENTER - Panel de Control </title>
+    <style>
+        /* Diseño Avanzado Local - 100% independiente de internet */
+        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; padding: 0; display: flex; color: #f8fafc; }
+        
+        /* Menu Lateral Estilo Ejecutivo */
+        .sidebar { width: 260px; background-color: #1e293b; min-height: 100vh; color: white; padding-top: 25px; box-sizing: border-box; box-shadow: 4px 0 10px rgba(0,0,0,0.3); }
+        .sidebar-titulo { text-align: center; margin-bottom: 35px; padding: 0 15px; }
+        .sidebar-titulo h3 { color: #38bdf8; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+        .sidebar-titulo small { color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar a { color: #94a3b8; text-decoration: none; padding: 14px 22px; display: block; font-weight: 600; font-size: 14px; transition: all 0.2s ease; border-radius: 8px; margin: 6px 14px; display: flex; align-items: center; gap: 10px; }
+        .sidebar a:hover { background-color: #334155; color: #38bdf8; transform: translateX(5px); }
+        .sidebar a.active { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; }
+        
+        /* Contenido Central */
+        .contenido { flex: 1; padding: 30px; box-sizing: border-box; }
+        .barra-top { background: #1e293b; padding: 20px 35px; margin: -30px -30px 35px -30px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .barra-top h2 { margin: 0; font-size: 24px; font-weight: 700; color: #f8fafc; letter-spacing: 0.5px; }
+        .btn-django { background: transparent; border: 2px solid #38bdf8; color: #38bdf8; padding: 8px 16px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 13px; transition: all 0.2s; }
+        .btn-django:hover { background: #38bdf8; color: #0f172a; transform: scale(1.05); }
+
+        /* Rejilla de Tarjetas Estadisticas Estilo Dashboard */
+        .grid-tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; margin-bottom: 45px; }
+        .tarjeta { background: #1e293b; border-radius: 12px; padding: 24px; border-bottom: 4px solid #475569; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; }
+        .tarjeta:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); }
+        .tarjeta-azul { border-bottom-color: #38bdf8; }
+        .tarjeta-celeste { border-bottom-color: #06b6d4; }
+        .tarjeta-roja { border-bottom-color: #ef4444; background: linear-gradient(180deg, #1e293b 0%, #451a03 100%); }
+        .tarjeta-amarilla { border-bottom-color: #eab308; }
+        .tarjeta-titulo { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .tarjeta-numero { font-size: 36px; font-weight: 800; margin-top: 8px; color: #f8fafc; }
+        .tarjeta-icono { font-size: 36px; opacity: 0.8; }
+
+        /* Botones de Acciones Grandes */
+        .seccion-titulo { font-size: 20px; font-weight: 700; color: #f8fafc; margin-bottom: 20px; border-left: 4px solid #38bdf8; padding-left: 10px; }
+        .grid-botones { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .btn-accion { display: block; text-align: center; text-decoration: none; padding: 20px; font-size: 16px; font-weight: 700; color: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-verde { background: linear-gradient(135deg, #22c55e, #15803d); }
+        .btn-verde:hover { background: linear-gradient(135deg, #4ade80, #16a34a); transform: translateY(-2px); }
+        .btn-azul { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .btn-azul:hover { background: linear-gradient(135deg, #60a5fa, #2563eb); transform: translateY(-2px); }
+        .btn-oscuro { background: linear-gradient(135deg, #475569, #334155); border: 1px solid #475569; }
+        .btn-oscuro:hover { background: linear-gradient(135deg, #64748b, #475569); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <!-- MENÚ LATERAL PREMIUM -->
+    <div class="sidebar">
+        <div class="sidebar-titulo">
+            <h3>🛠️ SISTEMA CONTROL-PRO 1.0</h3>
+            <small>TECNOLOGY CENTER</small>
+        </div>
+        <a href="/" class="active"><span>🏠</span> Inicio / Resumen</a>
+        <!-- CORREGIDO: Ahora apunta de forma directa a la nueva pantalla visual e intuitiva -->
+        <a href="/clientes/"><span>👥</span> Control de Clientes</a>
+        <a href="/trabajos/"><span>👷</span> Trabajos y Obras</a>
+        <a href="/mis-trabajos/"><span>📱</span> Pantalla Tecnicos</a>
+        <a href="/productos/"><span>📦</span> Inventario / Stock</a>
+        <a href="/compras/"><span>🛒</span> Ordenes de Compras</a>
+        <a href="/presupuestos/"><span>📄</span> Presupuestos</a>
+        <a href="/reporte-financiero/"><span>📊</span> Reporte Financiero</a>
+        <a href="/admin/gestion/datosempresa/"><span>⚙️</span> Datos de mi Empresa</a>
+        
+    </div>
+
+    <!-- CONTENIDO CENTRAL -->
+    <div class="contenido">
+        <div class="barra-top">
+            <h2>OPERACIONES GENERALES</h2>
+            <a href="/admin/" class="btn-django">⚙️ MOTOR GENERAL DJANGO</a>
+        </div>
+
+        <!-- INDICADORES CONTADORES -->
+        <div class="grid-tarjetas">
+            <div class="tarjeta tarjeta-azul">
+                <div>
+                    <div class="tarjeta-titulo">Total Clientes</div>
+                    <div class="tarjeta-numero">{{ clientes }}</div>
+                </div>
+                <div class="tarjeta-icono">👥</div>
+            </div>
+
+            <div class="tarjeta tarjeta-celeste">
+                <div>
+                    <div class="tarjeta-titulo">Obras Activas</div>
+                    <div class="tarjeta-numero">{{ progreso }}</div>
+                </div>
+                <div class="tarjeta-icono">🏗️</div>
+            </div>
+
+            <div class="tarjeta {% if alerta_stock > 0 %}tarjeta-roja{% else %}tarjeta-azul{% endif %}">
+                <div>
+                    <div class="tarjeta-titulo">Alertas de Stock</div>
+                    <div class="tarjeta-numero">{{ alerta_stock }}</div>
+                </div>
+                <div class="tarjeta-icono">⚠️</div>
+            </div>
+
+            <div class="tarjeta tarjeta-amarilla">
+                <div>
+                    <div class="tarjeta-titulo">Presupuestos Borrador</div>
+                    <div class="tarjeta-numero">{{ presupuestos }}</div>
+                </div>
+                <div class="tarjeta-icono">📄</div>
+            </div>
+        </div>
+
+        <!-- ACCIONES RÁPIDAS -->
+        <div class="seccion-titulo">Acciones Corporativas Rapidas</div>
+        <div class="grid-botones">
+            <a href="/admin/gestion/presupuesto/add/" class="btn-accion btn-verde">📝 Crear Nuevo Presupuesto</a>
+            <!-- CORREGIDO: Redireccion directa al modulo de clientes -->
+            <a href="/clientes/" class="btn-accion btn-azul">➕ Gestionar Clientes</a>
+            <a href="/reporte-financiero/" class="btn-accion btn-oscuro">📈 Balance de Ganancias</a>
+        </div>
+    </div>
+
+</body>
+</html>
