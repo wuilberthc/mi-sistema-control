@@ -1,93 +1,144 @@
 from django.contrib import admin
-from django.utils.html import format_html
-from .models import Cliente, Proveedor, Producto, Trabajo, FotoTrabajo, GastoObra, DatosEmpresa, Presupuesto, ItemPresupuesto, RegistroCompra
+from .models import (
+    Cliente,
+    CuentaPorCobrar,
+    CuentaPorPagar,
+    DatosEmpresa,
+    FotoTrabajo,
+    GastoObra,
+    ItemPresupuesto,
+    Presupuesto,
+    Producto,
+    Proveedor,
+    RegistroCompra,
+    Trabajo,
+    Transaccion,
+)
 
-# =========================================================================
-# 1. CONTROL DE INVENTARIO Y REGISTRO DE COMPRAS
-# =========================================================================
-class RegistroCompraInline(admin.TabularInline):
-    model = RegistroCompra
-    extra = 1
+
+@admin.register(Cliente)
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "rif_cedula", "telefono")
+    search_fields = ("nombre", "rif_cedula")
+    change_form_template = "gestion/mapa_cliente.html"
+
+
+@admin.register(Proveedor)
+class ProveedorAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "telefono")
+    search_fields = ("nombre",)
+
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('mostrar_miniatura', 'nombre', 'stock_actual', 'stock_minimo', 'precio_costo', 'precio_venta', 'alerta_stock')
-    list_filter = ('proveedor',)
-    search_fields = ('nombre',)
-    inlines = [RegistroCompraInline]
-
-    def mostrar_miniatura(self, obj):
-        if obj.foto:
-            return format_html('<img src="{}" style="width: 40px; height: 40px; object-fit: contain; border-radius: 4px;" />', obj.foto.url)
-        return "Sin Foto"
-    mostrar_miniatura.short_description = "Imagen"
-
-    def alerta_stock(self, obj):
-        if obj.necesita_compra:
-            return "COMPRAR URGENTE"
-        return "Stock OK"
-    alerta_stock.short_description = "Estado de Inventario"
+    list_display = (
+        "nombre",
+        "stock_actual",
+        "precio_costo",
+        "porcentaje_ganancia",
+        "proveedor",
+    )
+    search_fields = ("nombre",)
+    list_filter = ("proveedor",)
 
 
-# =========================================================================
-# 2. CONTROL DE TRABAJOS, FOTOS Y GASTOS DE OBRA
-# =========================================================================
-class FotoTrabajoInline(admin.TabularInline):
-    model = FotoTrabajo
-    extra = 3
+@admin.register(RegistroCompra)
+class RegistroCompraAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "producto",
+        "proveedor",
+        "cantidad_comprada",
+        "costo_unitario_compra",
+        "fecha_compra",
+    )
+    list_filter = ("proveedor", "fecha_compra")
 
+
+# Inlines para la sección de Trabajos
 class GastoObraInline(admin.TabularInline):
     model = GastoObra
     extra = 1
 
+
+class FotoTrabajoInline(admin.TabularInline):
+    model = FotoTrabajo
+    extra = 1
+
+
 @admin.register(Trabajo)
 class TrabajoAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'cliente', 'tecnico', 'estado', 'monto_cobrado', 'fecha_inicio')
-    list_filter = ('estado', 'cliente', 'tecnico')
-    search_fields = ('titulo', 'descripcion')
-    inlines = [FotoTrabajoInline, GastoObraInline]
+    list_display = ("titulo", "cliente", "tecnico", "estado", "monto_cobrado")
+    list_filter = ("estado", "tecnico")
+    search_fields = ("titulo", "cliente__nombre")
+    inlines = [GastoObraInline, FotoTrabajoInline]
 
 
-# =========================================================================
-# 3. CONTROL DE CLIENTES POR PLANTILLA (MAPA GPS)
-# =========================================================================
-@admin.register(Cliente)
-class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'telefono', 'latitud', 'longitud')
-    search_fields = ('nombre',)
-    change_form_template = 'gestion/mapa_cliente.html'
-    fields = ('nombre', 'telefono', 'foto', ('latitud', 'longitud'))
+@admin.register(FotoTrabajo)
+class FotoTrabajoAdmin(admin.ModelAdmin):
+    list_display = ("id", "trabajo", "fecha_subida")
 
 
-# =========================================================================
-# 4. SISTEMA DE PRESUPUESTOS CON BOTÓN DE IMPRESIÓN PDF
-# =========================================================================
+@admin.register(GastoObra)
+class GastoObraAdmin(admin.ModelAdmin):
+    list_display = ("descripcion", "trabajo", "monto", "fecha")
+    list_filter = ("fecha",)
+
+
+@admin.register(DatosEmpresa)
+class DatosEmpresaAdmin(admin.ModelAdmin):
+    list_display = ("nombre_comercial", "identificacion_fiscal", "telefono")
+
+
 class ItemPresupuestoInline(admin.TabularInline):
     model = ItemPresupuesto
-    extra = 2
+    extra = 1
+
 
 @admin.register(Presupuesto)
 class PresupuestoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'fecha_creacion', 'estado', 'obtener_total', 'boton_imprimir')
-    list_filter = ('estado', 'cliente')
-    search_fields = ('cliente__nombre',)
+    list_display = (
+        "id",
+        "cliente",
+        "fecha_creacion",
+        "estado",
+        "total_presupuesto",
+    )
+    list_filter = ("estado", "fecha_creacion")
+    search_fields = ("cliente__nombre",)
     inlines = [ItemPresupuestoInline]
 
-    def obtener_total(self, obj):
-        return f"${obj.total_presupuesto}"
-    obtener_total.short_description = "Total Presupuestado"
 
-    def boton_imprimir(self, obj):
-        return format_html(
-            '<a class="button" href="/presupuesto/{}/imprimir/" target="_blank" style="background-color: #007bff; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; text-decoration: none;">🖨️ Imprimir PDF</a>',
-            obj.id
-        )
-    boton_imprimir.short_description = "Accion"
+@admin.register(CuentaPorCobrar)
+class CuentaPorCobrarAdmin(admin.ModelAdmin):
+    list_display = (
+        "cliente",
+        "concepto",
+        "monto_deuda",
+        "monto_cobrado",
+        "fecha_vencimiento",
+        "estado",
+    )
+    list_filter = ("estado", "fecha_vencimiento")
+    search_fields = ("cliente__nombre", "concepto")
 
 
-# =========================================================================
-# 5. REGISTROS COMPLEMENTARIOS SIMPLES
-# =========================================================================
-admin.site.register(Proveedor)
-admin.site.register(DatosEmpresa)
-admin.site.register(RegistroCompra)
+@admin.register(CuentaPorPagar)
+class CuentaPorPagarAdmin(admin.ModelAdmin):
+    list_display = (
+        "proveedor",
+        "concepto",
+        "monto_deuda",
+        "monto_pagado",
+        "fecha_vencimiento",
+        "estado",
+    )
+    list_filter = ("estado", "fecha_vencimiento")
+    search_fields = ("proveedor__nombre", "concepto")
+
+
+@admin.register(Transaccion)
+class TransaccionAdmin(admin.ModelAdmin):
+    list_display = ("tipo", "concepto", "monto", "categoria", "fecha")
+    list_filter = ("tipo", "categoria", "fecha")
+    search_fields = ("concepto", "categoria")

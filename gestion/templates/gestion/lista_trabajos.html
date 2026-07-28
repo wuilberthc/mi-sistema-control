@@ -55,7 +55,7 @@
     <div class="contenido">
         <div class="barra-top">
             <h2>👷 Monitoreo General de Trabajos y Obras</h2>
-            <a href="/admin/gestion/trabajo/add/" class="btn-primario">➕ Planificar Nueva Obra</a>
+            <a href="{% url 'crear_trabajo' %}" class="btn-primario">➕ Planificar Nueva Obra</a>
         </div>
 
         <div class="tabla-contenedor">
@@ -96,7 +96,8 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="/admin/gestion/trabajo/{{ t.id }}/change/" class="btn-modificar">📋 Gestionar / Gastos</a>
+                            <!-- Enlace corregido usando la variable correcta 't.id' -->
+                            <a href="{% url 'detalle_trabajo' t.id %}" class="btn-modificar">Gestionar / Gastos</a>
                         </td>
                     </tr>
                     {% endfor %}

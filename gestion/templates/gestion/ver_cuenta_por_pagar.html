@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIENDA TECHNOLOGY - Detalle Cuenta por Pagar</title>
+    <style>
+        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; padding: 30px; color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        h2 { color: #38bdf8; margin-top: 0; margin-bottom: 20px; font-size: 22px; }
+        .detail-group { margin-bottom: 16px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+        .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .value { color: #f8fafc; font-size: 16px; margin-top: 4px; }
+        .btn { background: #475569; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; display: inline-block; margin-top: 20px; transition: all 0.2s; }
+        .btn:hover { background: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>👁️ Detalle de Cuenta por Pagar</h2>
+        
+        <div class="detail-group">
+            <div class="label">Proveedor</div>
+            <div class="value"><strong>{{ cuenta.proveedor }}</strong></div>
+        </div>
+        <div class="detail-group">
+            <div class="label">Concepto</div>
+            <div class="value">{{ cuenta.concepto|default:"S/N" }}</div>
+        </div>
+        <div class="detail-group">
+            <div class="label">Monto Deuda</div>
+            <div class="value">${{ cuenta.monto_deuda }}</div>
+        </div>
+        <div class="detail-group">
+            <div class="label">Monto Pagado</div>
+            <div class="value">${{ cuenta.monto_pagado }}</div>
+        </div>
+        <div class="detail-group">
+            <div class="label">Fecha de Vencimiento</div>
+            <div class="value">{{ cuenta.fecha_vencimiento }}</div>
+        </div>
+        <div class="detail-group">
+            <div class="label">Estado</div>
+            <div class="value">{{ cuenta.get_estado_display }}</div>
+        </div>
+
+        <a href="{% url 'cuentas_por_pagar' %}" class="btn">⬅️ Volver</a>
+    </div>
+</body>
+</html>

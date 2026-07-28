@@ -1,23 +1,44 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 # =========================================================================
-# 1. CONTROL DE CLIENTES (Foto y GPS)
+# 1. CONTROL DE CLIENTES (Foto, GPS y Datos Fiscales)
 # =========================================================================
+
+
 class Cliente(models.Model):
     nombre = models.CharField(max_length=100)
+    rif_cedula = models.CharField(
+        max_length=50, blank=True, null=True, verbose_name="Rif o Cédula"
+    )
     telefono = models.CharField(max_length=20, blank=True, null=True)
-    foto = models.ImageField(upload_to='clientes/', blank=True, null=True)
-    latitud = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    longitud = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    direccion = models.TextField(
+        blank=True, null=True, verbose_name="Dirección"
+    )
+    nota_privada = models.TextField(
+        blank=True, null=True, verbose_name="Nota Privada"
+    )
+    foto = models.ImageField(upload_to="clientes/", blank=True, null=True)
+    latitud = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True
+    )
+    longitud = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True
+    )
 
     def __str__(self):
-        return self.nombre
+        return (
+            f"{self.nombre} ({self.rif_cedula})"
+            if self.rif_cedula
+            else self.nombre
+        )
 
 
 # =========================================================================
 # 2. PROVEEDORES Y CONTROL DE INVENTARIO
 # =========================================================================
+
+
 class Proveedor(models.Model):
     nombre = models.CharField(max_length=100)
     telefono = models.CharField(max_length=20, blank=True, null=True)
@@ -25,15 +46,34 @@ class Proveedor(models.Model):
     def __str__(self):
         return self.nombre
 
+
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
-    stock_actual = models.IntegerField(default=0, verbose_name="Existencia Actual")
+    stock_actual = models.IntegerField(
+        default=0, verbose_name="Existencia Actual"
+    )
     stock_minimo = models.IntegerField(default=5)
-    precio_costo = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Ultimo Precio Costo")
-    porcentaje_ganancia = models.DecimalField(max_digits=5, decimal_places=2, default=30.0)
-    porcentaje_impuesto = models.DecimalField(max_digits=5, decimal_places=2, default=16.0)
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.SET_NULL, null=True, verbose_name="Proveedor Habitual")
-    foto = models.ImageField(upload_to='productos/', blank=True, null=True, verbose_name="Foto del Producto")
+    precio_costo = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Ultimo Precio Costo"
+    )
+    porcentaje_ganancia = models.DecimalField(
+        max_digits=5, decimal_places=2, default=30.0
+    )
+    porcentaje_impuesto = models.DecimalField(
+        max_digits=5, decimal_places=2, default=16.0
+    )
+    proveedor = models.ForeignKey(
+        Proveedor,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Proveedor Habitual",
+    )
+    foto = models.ImageField(
+        upload_to="productos/",
+        blank=True,
+        null=True,
+        verbose_name="Foto del Producto",
+    )
 
     @property
     def necesita_compra(self):
@@ -41,8 +81,12 @@ class Producto(models.Model):
 
     @property
     def precio_venta(self):
-        con_ganancia = float(self.precio_costo) * (1 + (float(self.porcentaje_ganancia) / 100))
-        precio_final = con_ganancia * (1 + (float(self.porcentaje_impuesto) / 100))
+        con_ganancia = float(self.precio_costo) * (
+            1 + (float(self.porcentaje_ganancia) / 100)
+        )
+        precio_final = con_ganancia * (
+            1 + (float(self.porcentaje_impuesto) / 100)
+        )
         return round(precio_final, 2)
 
     def __str__(self):
@@ -52,11 +96,17 @@ class Producto(models.Model):
 # =========================================================================
 # 3. HISTORIAL DE COMPRAS (Abastecimiento de Inventario)
 # =========================================================================
+
+
 class RegistroCompra(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='compras_inventario')
+    producto = models.ForeignKey(
+        Producto, on_delete=models.CASCADE, related_name="compras_inventario"
+    )
     proveedor = models.ForeignKey(Proveedor, on_delete=models.SET_NULL, null=True)
     cantidad_comprada = models.IntegerField(verbose_name="Cantidad que Entra")
-    costo_unitario_compra = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo Unitario de Compra")
+    costo_unitario_compra = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="Costo Unitario de Compra"
+    )
     fecha_compra = models.DateField(verbose_name="Fecha de Factura / Compra")
 
     class Meta:
@@ -78,26 +128,46 @@ class RegistroCompra(models.Model):
 # =========================================================================
 # 4. CONTROL DE TRABAJOS Y FOTOS MÚLTIPLES
 # =========================================================================
+
+
 class Trabajo(models.Model):
     ESTADOS = [
-        ('PEND', 'Pendiente / Planificado'),
-        ('PROG', 'En Progreso'),
-        ('TERM', 'Terminado'),
+        ("PEND", "Pendiente / Planificado"),
+        ("PROG", "En Progreso"),
+        ("TERM", "Terminado"),
     ]
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
-    tecnico = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Tecnico Asignado")
-    titulo = models.CharField(max_length=150, verbose_name="Título del Trabajo u Obra")
-    descripcion = models.TextField(verbose_name="Notas / Descripción del Avance", blank=True, null=True)
+    tecnico = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Tecnico Asignado",
+    )
+    titulo = models.CharField(
+        max_length=150, verbose_name="Título del Trabajo u Obra"
+    )
+    descripcion = models.TextField(
+        verbose_name="Notas / Descripción del Avance", blank=True, null=True
+    )
     fecha_inicio = models.DateField(auto_now_add=True)
-    estado = models.CharField(max_length=4, choices=ESTADOS, default='PEND')
-    monto_cobrado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Monto Cobrado al Cliente")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default="PEND")
+    monto_cobrado = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        verbose_name="Monto Cobrado al Cliente",
+    )
 
     def __str__(self):
         return f"{self.titulo} - {self.cliente.nombre} ({self.get_estado_display()})"
 
+
 class FotoTrabajo(models.Model):
-    trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name='fotos')
-    foto = models.ImageField(upload_to='trabajos/')
+    trabajo = models.ForeignKey(
+        Trabajo, on_delete=models.CASCADE, related_name="fotos"
+    )
+    foto = models.ImageField(upload_to="trabajos/")
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -107,9 +177,19 @@ class FotoTrabajo(models.Model):
 # =========================================================================
 # 5. CONTROL DE GASTOS DE LA OBRA
 # =========================================================================
+
+
 class GastoObra(models.Model):
-    trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name='gastos', verbose_name="Obra / Trabajo")
-    descripcion = models.CharField(max_length=200, verbose_name="Concepto del Gasto (Ej. Transporte, Almuerzos)")
+    trabajo = models.ForeignKey(
+        Trabajo,
+        on_delete=models.CASCADE,
+        related_name="gastos",
+        verbose_name="Obra / Trabajo",
+    )
+    descripcion = models.CharField(
+        max_length=200,
+        verbose_name="Concepto del Gasto (Ej. Transporte, Almuerzos)",
+    )
     monto = models.DecimalField(max_digits=10, decimal_places=2)
     fecha = models.DateField()
 
@@ -120,13 +200,24 @@ class GastoObra(models.Model):
 # =========================================================================
 # 6. CONFIGURACIÓN DEL ENCABEZADO DE LA EMPRESA
 # =========================================================================
+
+
 class DatosEmpresa(models.Model):
-    nombre_comercial = models.CharField(max_length=150, verbose_name="Nombre de la Empresa")
-    identificacion_fiscal = models.CharField(max_length=50, verbose_name="RIF / NIT / RUT")
+    nombre_comercial = models.CharField(
+        max_length=150, verbose_name="Nombre de la Empresa"
+    )
+    identificacion_fiscal = models.CharField(
+        max_length=50, verbose_name="RIF / NIT / RUT"
+    )
     telefono = models.CharField(max_length=50, blank=True, null=True)
     correo = models.EmailField(blank=True, null=True)
     direccion = models.TextField(blank=True, null=True)
-    logo = models.ImageField(upload_to='empresa/', blank=True, null=True, verbose_name="Logotipo de la Empresa")
+    logo = models.ImageField(
+        upload_to="empresa/",
+        blank=True,
+        null=True,
+        verbose_name="Logotipo de la Empresa",
+    )
 
     class Meta:
         verbose_name = "Datos de mi Empresa"
@@ -139,37 +230,104 @@ class DatosEmpresa(models.Model):
 # =========================================================================
 # 7. SISTEMA DE PRESUPUESTOS AUTOMATIZADOS (Neto e IVA)
 # =========================================================================
+
+
 class Presupuesto(models.Model):
     ESTADOS = [
-        ('BORR', 'Borrador'),
-        ('ENVI', 'Enviado al Cliente'),
-        ('ACEP', 'Aceptado (Crear Obra)'),
-        ('RECH', 'Rechazado'),
+        ("BORR", "Borrador"),
+        ("ENVI", "Enviado al Cliente"),
+        ("ACEP", "Aceptado (Crear Obra)"),
+        ("RECH", "Rechazado"),
     ]
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     fecha_creacion = models.DateField(auto_now_add=True)
-    estado = models.CharField(max_length=4, choices=ESTADOS, default='BORR')
-    notas_adicionales = models.TextField(blank=True, null=True, verbose_name="Condiciones o Notas del Presupuesto")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default="BORR")
+    notas_adicionales = models.TextField(
+        blank=True, null=True, verbose_name="Condiciones o Notas del Presupuesto"
+    )
 
     @property
     def total_presupuesto(self):
-        total = sum(float(item.producto.precio_venta) * int(item.cantidad) for item in self.items.all())
+        total = sum(
+            float(item.producto.precio_venta) * int(item.cantidad)
+            for item in self.items.all()
+        )
         return round(total, 2)
 
     def __str__(self):
         return f"Presupuesto #{self.id} - {self.cliente.nombre} (${self.total_presupuesto})"
 
+
 class ItemPresupuesto(models.Model):
-    presupuesto = models.ForeignKey(Presupuesto, on_delete=models.CASCADE, related_name='items')
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, verbose_name="Material / Servicio")
+    presupuesto = models.ForeignKey(
+        Presupuesto, on_delete=models.CASCADE, related_name="items"
+    )
+    producto = models.ForeignKey(
+        Producto, on_delete=models.CASCADE, verbose_name="Material / Servicio"
+    )
     cantidad = models.IntegerField(default=1)
 
     @property
     def subtotal(self):
         precio_venta_producto = float(self.producto.precio_venta)
         cantidad_solicitada = int(self.cantidad)
-        subtotal_neto_renglon = (precio_venta_producto * cantidad_solicitada) / 1.16
+        subtotal_neto_renglon = (
+            precio_venta_producto * cantidad_solicitada
+        ) / 1.16
         return round(subtotal_neto_renglon, 2)
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre}"
+    # =========================================================================
+# 8. CUENTAS POR COBRAR Y CUENTAS POR PAGAR (Finanzas)
+# =========================================================================
+class CuentaPorCobrar(models.Model):
+    ESTADOS = [
+        ('PEND', 'Pendiente'),
+        ('PAG', 'Pagado'),
+        ('VENC', 'Vencido'),
+    ]
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
+    concepto = models.CharField(max_length=200, verbose_name="Concepto")
+    monto_deuda = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Total")
+    monto_cobrado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Monto Abonado / Cobrado")
+    fecha_emision = models.DateField(verbose_name="Fecha de Emisión")
+    fecha_vencimiento = models.DateField(verbose_name="Fecha de Vencimiento")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default='PEND', verbose_name="Estado")
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones")
+
+    def __str__(self):
+        return f"CxC - {self.cliente.nombre} (${self.monto_deuda})"
+
+class CuentaPorPagar(models.Model):
+    ESTADOS = [
+        ('PEND', 'Pendiente'),
+        ('PAG', 'Pagado'),
+        ('VENC', 'Vencido'),
+    ]
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor")
+    concepto = models.CharField(max_length=200, verbose_name="Concepto / Factura")
+    monto_deuda = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Deuda")
+    monto_pagado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Monto Pagado")
+    fecha_emision = models.DateField(verbose_name="Fecha de Emisión")
+    fecha_vencimiento = models.DateField(verbose_name="Fecha de Vencimiento")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default='PEND', verbose_name="Estado")
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones")
+
+    def __str__(self):
+        return f"CxP - {self.proveedor.nombre} (${self.monto_deuda})"
+
+class Transaccion(models.Model):
+    TIPOS = [
+        ('ING', 'Ingreso'),
+        ('EGR', 'Egreso'),
+    ]
+    tipo = models.CharField(max_length=3, choices=TIPOS, default='ING', verbose_name="Tipo de Movimiento")
+    concepto = models.CharField(max_length=150, verbose_name="Concepto")
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto")
+    categoria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Categoría")
+    fecha = models.DateField(verbose_name="Fecha")
+    descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.concepto} (${self.monto})"

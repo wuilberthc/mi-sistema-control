@@ -1,36 +1,66 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from datetime import date
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, F
-from .models import Trabajo, FotoTrabajo, Presupuesto, DatosEmpresa, Cliente, Producto
+from django.contrib import messages
+from django.db.models import F, Sum
+from django.forms import inlineformset_factory
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.models import User
+
+
+
+from .forms import (
+    ClienteForm,
+    CuentaPorCobrarForm,
+    CuentaPorPagarForm,
+    DatosEmpresaForm,
+    FotoTrabajoForm,
+    GastoObraForm,
+    ItemPresupuestoForm,
+    PresupuestoForm,
+    ProductoForm,
+    RegistroCompraForm,
+    TrabajoForm,
+    TransaccionForm,
+)
+from .models import (
+    Cliente,
+    CuentaPorCobrar,
+    CuentaPorPagar,
+    DatosEmpresa,
+    FotoTrabajo,
+    GastoObra,
+    ItemPresupuesto,
+    Presupuesto,
+    Producto,
+    Proveedor,
+    RegistroCompra,
+    Trabajo,
+    Transaccion,
+)
+
 
 # =========================================================================
 # 1. PÁGINA DE INICIO PRINCIPAL (DASHBOARD VISUAL MODERNO)
 # =========================================================================
-def dashboard_principal(request):
-    total_clientes = Cliente.objects.count()
-    obras_en_progreso = Trabajo.objects.filter(estado='PROG').count()
-    obras_terminadas = Trabajo.objects.filter(estado='TERM').count()
-    presupuestos_pendientes = Presupuesto.objects.filter(estado='BORR').count()
-    
-    # Filtro automatico comparando stock actual con el minimo
-    productos_sin_stock = Producto.objects.filter(stock_actual__lte=F('stock_minimo')).count()
 
-    return render(request, 'gestion/dashboard.html', {
-        'clientes': total_clientes,
-        'progreso': obras_en_progreso,
-        'terminadas': obras_terminadas,
-        'presupuestos': presupuestos_pendientes,
-        'alerta_stock': productos_sin_stock
-    })
+def dashboard_principal(request):
+    context = {
+        'clientes': Cliente.objects.count(),
+        'progreso': Trabajo.objects.filter(estado='PROG').count(),
+        'terminadas': Trabajo.objects.filter(estado='TERM').count(),
+        'presupuestos': Presupuesto.objects.filter(estado='BORR').count(),
+        'alerta_stock': Producto.objects.filter(stock_actual__lte=F('stock_minimo')).count(),
+    }
+    return render(request, 'gestion/dashboard.html', context)
 
 
 # =========================================================================
 # 2. PANTALLA EXCLUSIVA PARA TÉCNICOS EN EL CELULAR
 # =========================================================================
-@login_required(login_url='/login/') # <-- CAMBIADO: Quitamos el camino /admin/
-def pantalla_tecnicos(request):
-    trabajos = Trabajo.objects.filter(tecnico=request.user).order_by('-id')
 
+@login_required(login_url='/login/')
+def pantalla_tecnicos(request):
     if request.method == 'POST':
         trabajo_id = request.POST.get('trabajo_id')
         imagenes = request.FILES.getlist('fotos_nuevas')
@@ -38,50 +68,51 @@ def pantalla_tecnicos(request):
         nuevo_estado = request.POST.get('estado')
 
         if trabajo_id:
-            trabajo = Trabajo.objects.get(id=trabajo_id, tecnico=request.user)
-            
+            trabajo = get_object_or_404(Trabajo, id=trabajo_id, tecnico=request.user)
+
             if notas:
                 if trabajo.descripcion:
-                    trabajo.descripcion += f"\n\n--- Actualizacion ---\n{notas}"
+                    trabajo.descripcion += f'\n\n--- Actualizacion ---\n{notas}'
                 else:
                     trabajo.descripcion = notas
-            
+
             if nuevo_estado:
                 trabajo.estado = nuevo_estado
-            
+
             trabajo.save()
 
             for img in imagenes:
                 FotoTrabajo.objects.create(trabajo=trabajo, foto=img)
-                
+
             return redirect('pantalla_tecnicos')
 
+    trabajos = Trabajo.objects.filter(tecnico=request.user).order_by('-id')
+    return render(request, 'gestion/tecnicos.html', {'trabajos': trabajos})
+
+
+@login_required(login_url='/login/')
+def mis_trabajos(request):
+    trabajos = Trabajo.objects.filter(tecnico=request.user).order_by('-id')
     return render(request, 'gestion/tecnicos.html', {'trabajos': trabajos})
 
 
 # =========================================================================
 # 3. PANEL ADMINISTRATIVO - REPORTE FINANCIERO DE OBRAS
 # =========================================================================
+
 def reporte_financiero(request):
-    # 1. Traemos la lista de clientes para la caja desplegable
-    todos_los_clientes = Cliente.objects.all().order_by('nombre')
-    
-    # 2. Capturamos todos los filtros de la pantalla (Clientes, Estados y Fechas)
     cliente_filtrado = request.GET.get('filtro_cliente')
     estado_filtrado = request.GET.get('filtro_estado')
     fecha_desde = request.GET.get('fecha_desde')
     fecha_hasta = request.GET.get('fecha_hasta')
 
-    # 3. Base inicial: traer todas las obras
     trabajos = Trabajo.objects.all().order_by('-id')
 
-    # 4. APLICACIÓN DE FILTROS DINÁMICOS
     if cliente_filtrado:
         trabajos = trabajos.filter(cliente_id=cliente_filtrado)
     if estado_filtrado:
         trabajos = trabajos.filter(estado=estado_filtrado)
-        
-    # FILTRO DE FECHAS INTELIGENTE: Valida que el usuario haya ingresado ambas fechas
+
     if fecha_desde and fecha_hasta:
         trabajos = trabajos.filter(fecha_inicio__range=[fecha_desde, fecha_hasta])
     elif fecha_desde:
@@ -89,7 +120,6 @@ def reporte_financiero(request):
     elif fecha_hasta:
         trabajos = trabajos.filter(fecha_inicio__lte=fecha_hasta)
 
-    # 5. Procesamos la matemática financiera para las obras resultantes
     datos_reporte = []
     for trabajo in trabajos:
         total_gastos_campo = trabajo.gastos.aggregate(total=Sum('monto'))['total'] or 0
@@ -100,128 +130,519 @@ def reporte_financiero(request):
             'trabajo': trabajo,
             'monto_cobrado': monto_cobrado,
             'gastos_campo': total_gastos_campo,
-            'ganancia_neta': round(ganancia_neta, 2)
+            'ganancia_neta': round(ganancia_neta, 2),
         })
 
-    # 6. Enviamos los datos de vuelta para mantener los valores fijos en la pantalla al filtrar
-    return render(request, 'gestion/reporte_financiero.html', {
+    context = {
         'reportes': datos_reporte,
-        'clientes': todos_los_clientes,
+        'clientes': Cliente.objects.all().order_by('nombre'),
         'cliente_sel': cliente_filtrado,
         'estado_sel': estado_filtrado,
         'fecha_desde_sel': fecha_desde,
-        'fecha_hasta_sel': fecha_hasta
-    })
+        'fecha_hasta_sel': fecha_hasta,
+    }
+    return render(request, 'gestion/reporte_financiero.html', context)
+
 
 # =========================================================================
 # 4. VISTA DE IMPRESIÓN - DESGLOSE AUTOMÁTICO DE SUB-TOTAL E IVA (16%)
 # =========================================================================
+
 def vista_imprimir_presupuesto(request, presupuesto_id):
     presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id)
     empresa = DatosEmpresa.objects.first()
-    
-    if presupuesto.items.exists():
+
+    if hasattr(presupuesto, 'items') and presupuesto.items.exists():
         items_base = presupuesto.items.all()
-    else:
+    elif hasattr(presupuesto, 'itempresupuesto_set') and presupuesto.itempresupuesto_set.exists():
         items_base = presupuesto.itempresupuesto_set.all()
-    
+    else:
+        items_base = ItemPresupuesto.objects.filter(presupuesto=presupuesto)
+
     items_calculados = []
     for item in items_base:
-        subtotal_item = float(item.subtotal)
-        cantidad = int(item.cantidad)
-        
+        subtotal_item = float(item.subtotal) if hasattr(item, 'subtotal') else 0.0
+        cantidad = int(item.cantidad) if hasattr(item, 'cantidad') else 1
         precio_unitario_neto = subtotal_item / cantidad if cantidad > 0 else 0
-        
+
         items_calculados.append({
-            'nombre': item.producto.nombre,
+            'nombre': item.producto.nombre if hasattr(item, 'producto') and item.producto else 'Ítems diversos',
             'cantidad': cantidad,
             'precio_unitario': round(precio_unitario_neto, 2),
-            'subtotal': round(subtotal_item, 2)
+            'subtotal': round(subtotal_item, 2),
         })
 
-    total_general = float(presupuesto.total_presupuesto)
+    total_general = float(presupuesto.total_presupuesto) if hasattr(presupuesto, 'total_presupuesto') else 0.0
     subtotal_final = total_general / 1.16
     iva_final = subtotal_final * 0.16
-    
-    return render(request, 'gestion/imprimir_presupuesto.html', {
+
+    context = {
         'presupuesto': presupuesto,
         'empresa': empresa,
         'items_finales': items_calculados,
         'subtotal': round(subtotal_final, 2),
         'iva': round(iva_final, 2),
-        'total': round(total_general, 2)
-    })
+        'total': round(total_general, 2),
+    }
+    return render(request, 'gestion/imprimir_presupuesto.html', context)
+
+
+# =========================================================================
+# 5. LISTADOS GENERALES
+# =========================================================================
+
 def vista_lista_clientes(request):
-    # Buscamos todos los clientes ordenados por orden alfabetico
-    todos_los_clientes = Cliente.objects.all().order_by('nombre')
-    return render(request, 'gestion/lista_clientes.html', {'lista_clientes': todos_los_clientes})
+    return render(request, 'gestion/lista_clientes.html', {'lista_clientes': Cliente.objects.all().order_by('nombre')})
+
+
 def vista_lista_productos(request):
-    todos_los_productos = Producto.objects.all().order_by('nombre')
-    return render(request, 'gestion/lista_productos.html', {'lista_productos': todos_los_productos})
+    return render(request, 'gestion/lista_productos.html', {'lista_productos': Producto.objects.all().order_by('nombre')})
+
+
 def vista_lista_trabajos(request):
-    todas_las_obras = Trabajo.objects.all().order_by('-id')
-    return render(request, 'gestion/lista_trabajos.html', {'lista_trabajos': todas_las_obras})
+    return render(request, 'gestion/lista_trabajos.html', {'lista_trabajos': Trabajo.objects.all().order_by('-id')})
+
+
 def vista_lista_presupuestos(request):
-    todos_los_presupuestos = Presupuesto.objects.all().order_by('-id')
-    return render(request, 'gestion/lista_presupuestos.html', {'lista_presupuestos': todos_los_presupuestos})
-# =========================================================================
-# 5. MOTOR CORE ERP: TRANSFORMAR PRESUPUESTO EN OBRA Y DESCONTAR ALMACÉN
-# =========================================================================
-def procesar_aprobacion_erp(request, presupuesto_id):
-    # 1. Buscamos el presupuesto que el cliente acepto
-    presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id)
-    
-    # Si el presupuesto ya fue procesado antes, evitamos duplicar la operacion
-    if presupuesto.estado == 'ACEP':
-        return redirect('lista_presupuestos')
-        
-    # 2. AUTOMATIZACIÓN DE ALMACÉN: Recorremos los materiales y los restamos del stock
-    items_presupuesto = presupuesto.items.all() if presupuesto.items.exists() else presupuesto.itempresupuesto_set.all()
-    
-    for item in items_presupuesto:
-        producto_inventario = item.producto
-        # Restamos las cantidades físicamente del inventario
-        producto_inventario.stock_actual -= int(item.cantidad)
-        producto_inventario.save()
-        
-    # 3. AUTOMATIZACIÓN DE OPERACIONES: Creamos la orden de Trabajo/Obra de forma automática
-    nueva_obra = Trabajo.objects.create(
-        cliente=presupuesto.cliente,
-        titulo=f"OBRA EFECTIVA: Presupuesto #{presupuesto.id}",
-        descripcion=f"Materiales cotizados y descontados de almacen:\n" + 
-                    "\n".join([f"- {i.cantidad}x {i.producto.nombre}" for i in items_presupuesto]) +
-                    f"\n\nNotas adicionales del contrato:\n{presupuesto.notas_adicionales or 'Sin notas.'}",
-        monto_cobrado=presupuesto.total_presupuesto, # Inyectamos el cobro real directo al reporte financiero
-        estado='PEND' # Queda planificada a la espera de asignarle un tecnico
-    )
-    
-    # 4. Cambiamos el estado del presupuesto a ACEPTADO
-    presupuesto.estado = 'ACEP'
-    presupuesto.save()
-    
-    # Redirigimos al usuario directamente a la nueva lista visual de trabajos para que vea su obra creada
-    return redirect('lista_trabajos')
-from .models import RegistroCompra
+    return render(request, 'gestion/lista_presupuestos.html', {'lista_presupuestos': Presupuesto.objects.all().order_by('-id')})
+
 
 def vista_lista_compras(request):
-    todas_las_compras = RegistroCompra.objects.all().order_by('-id')
-    return render(request, 'gestion/lista_compras.html', {'lista_compras': todas_las_compras})
-from django.contrib.auth import authenticate, login
+    return render(request, 'gestion/lista_compras.html', {'lista_compras': RegistroCompra.objects.all().order_by('-id')})
+
+
+# =========================================================================
+# 6. MOTOR CORE ERP: TRANSFORMAR PRESUPUESTO EN OBRA Y DESCONTAR ALMACÉN
+# =========================================================================
+
+def procesar_aprobacion_erp(request, presupuesto_id):
+    presupuesto = get_object_or_404(Presupuesto, id=presupuesto_id)
+
+    if presupuesto.estado == 'ACEP':
+        return redirect('lista_presupuestos')
+
+    items_presupuesto = (
+        presupuesto.items.all()
+        if hasattr(presupuesto, 'items') and presupuesto.items.exists()
+        else presupuesto.itempresupuesto_set.all()
+    )
+
+    for item in items_presupuesto:
+        producto_inventario = item.producto
+        producto_inventario.stock_actual -= int(item.cantidad)
+        producto_inventario.save()
+
+    descripcion_items = '\n'.join([f'- {i.cantidad}x {i.producto.nombre}' for i in items_presupuesto])
+    notas_adicionales = presupuesto.notas_adicionales or 'Sin notas.'
+
+    Trabajo.objects.create(
+        cliente=presupuesto.cliente,
+        titulo=f'OBRA: {presupuesto.cliente.nombre} (Presupuesto #{presupuesto.id})',
+        descripcion=f'Actividades / Materiales instalados:\n{descripcion_items}\n\nNotas:\n{notas_adicionales}',
+        monto_cobrado=presupuesto.total_presupuesto,
+        estado='PEND',
+    )
+
+    presupuesto.estado = 'ACEP'
+    presupuesto.save()
+
+    return redirect('lista_trabajos')
+
+
+# =========================================================================
+# 7. AUTENTICACIÓN (LOGIN PERSONALIZADO)
+# =========================================================================
 
 def vista_login_personalizado(request):
     error = False
     if request.method == 'POST':
-        usuario_escribio = request.POST.get('username')
-        clave_escribio = request.POST.get('password')
-        
-        # Validamos contra la base de datos de Django
-        usuario_valido = authenticate(request, username=usuario_escribio, password=clave_escribio)
-        
-        if usuario_valido is not None:
-            login(request, usuario_valido)
-            # Si el inicio es correcto, lo enviamos al Dashboard principal
+        usuario = authenticate(
+            request,
+            username=request.POST.get('username'),
+            password=request.POST.get('password'),
+        )
+        if usuario is not None:
+            login(request, usuario)
             return redirect('dashboard')
-        else:
-            error = True # Activa el recuadro rojo de alerta
+        error = True
 
     return render(request, 'gestion/login.html', {'error_login': error})
+
+
+# =========================================================================
+# 8. REPORTE DE GANANCIAS Y PÉRDIDAS (FINANZAS)
+# =========================================================================
+
+def reporte_ganancias_perdidas(request):
+    total_ingresos = Transaccion.objects.filter(tipo='ingreso').aggregate(Sum('monto'))['monto__sum'] or 0
+    total_gastos = Transaccion.objects.filter(tipo='gasto').aggregate(Sum('monto'))['monto__sum'] or 0
+    
+    context = {
+        'total_ingresos': total_ingresos,
+        'total_gastos': total_gastos,
+        'utilidad_neta': total_ingresos - total_gastos,
+        'transacciones': Transaccion.objects.all().order_by('-fecha'),
+    }
+    return render(request, 'gestion/reporte_financiero.html', context)
+
+
+def registrar_transaccion(request):
+    if request.method == 'POST':
+        form = TransaccionForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('reporte_financiero')
+    else:
+        form = TransaccionForm()
+
+    return render(request, 'gestion/registrar_transaccion.html', {'form': form})
+
+
+# =========================================================================
+# 9. MÓDULO DE CUENTAS POR PAGAR
+# =========================================================================
+
+def lista_cuentas_por_pagar(request):
+    cuentas = CuentaPorPagar.objects.all().order_by('fecha_vencimiento')
+    
+    total_deuda_pendiente = sum(
+        (c.monto_deuda - c.monto_pagado) for c in cuentas if c.estado != 'PAG'
+    )
+
+    context = {
+        'cuentas': cuentas,
+        'total_deuda_pendiente': total_deuda_pendiente,
+    }
+    return render(request, 'gestion/lista_cuentas_por_pagar.html', context)
+
+
+def registrar_cuenta_por_pagar(request):
+    if request.method == 'POST':
+        form = CuentaPorPagarForm(request.POST)
+        if form.is_valid():
+            cuenta = form.save()
+            if cuenta.monto_pagado > 0:
+                Transaccion.objects.create(
+                    tipo='gasto',
+                    monto=cuenta.monto_pagado,
+                    descripcion=f'Pago CxP Proveedor: {cuenta.proveedor if hasattr(cuenta, "proveedor") else "General"} - Concepto: {cuenta.concepto}',
+                    fecha=date.today()
+                )
+                if cuenta.monto_pagado >= cuenta.monto_deuda:
+                    cuenta.estado = 'PAG'
+                    cuenta.save()
+            return redirect('cuentas_por_pagar')
+    else:
+        form = CuentaPorPagarForm()
+
+    return render(request, 'gestion/registrar_cxp.html', {'form': form})
+
+
+def ver_cuenta_por_pagar(request, pk):
+    cuenta = get_object_or_404(CuentaPorPagar, pk=pk)
+    return render(request, 'gestion/ver_cuenta_por_pagar.html', {'cuenta': cuenta})
+
+
+def modificar_cuenta_por_pagar(request, pk):
+    cuenta = get_object_or_404(CuentaPorPagar, pk=pk)
+    monto_pagado_anterior = cuenta.monto_pagado 
+
+    if request.method == 'POST':
+        form = CuentaPorPagarForm(request.POST, instance=cuenta)
+        if form.is_valid():
+            cuenta_actualizada = form.save(commit=False)
+            
+            if float(cuenta_actualizada.monto_pagado) >= float(cuenta_actualizada.monto_deuda):
+                cuenta_actualizada.estado = 'PAG'
+            else:
+                cuenta_actualizada.estado = 'PEND'
+            
+            cuenta_actualizada.save()
+            
+            CuentaPorPagar.objects.filter(pk=cuenta.pk).update(estado=cuenta_actualizada.estado)
+
+            diferencia_pago = float(cuenta_actualizada.monto_pagado) - float(monto_pagado_anterior)
+            if diferencia_pago > 0:
+                Transaccion.objects.create(
+                    tipo='gasto',
+                    monto=diferencia_pago,
+                    descripcion=f'Abono/Pago CxP: {cuenta_actualizada.concepto}',
+                    fecha=date.today()
+                )
+
+            return redirect('cuentas_por_pagar')
+    else:
+        form = CuentaPorPagarForm(instance=cuenta)
+    
+    return render(request, 'gestion/modificar_cuenta_por_pagar.html', {'form': form, 'cuenta': cuenta})
+
+
+# =========================================================================
+# 10. MÓDULO DE CUENTAS POR COBRAR
+# =========================================================================
+
+def lista_cuentas_por_cobrar(request):
+    return render(request, 'gestion/lista_cuentas_por_cobrar.html', {'cuentas': CuentaPorCobrar.objects.all().order_by('fecha_vencimiento')})
+
+
+def registrar_cuenta_por_cobrar(request):
+    if request.method == 'POST':
+        form = CuentaPorCobrarForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_cuentas_por_cobrar')
+    else:
+        form = CuentaPorCobrarForm()
+
+    return render(request, 'gestion/registrar_cxc.html', {'form': form})
+
+
+def ver_cuenta_por_cobrar(request, pk):
+    cuenta = get_object_or_404(CuentaPorCobrar, pk=pk)
+    return render(request, 'gestion/ver_cuenta_por_cobrar.html', {'cuenta': cuenta})
+
+
+def modificar_cuenta_por_cobrar(request, pk):
+    cuenta = get_object_or_404(CuentaPorCobrar, pk=pk)
+    if request.method == 'POST':
+        form = CuentaPorCobrarForm(request.POST, instance=cuenta)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_cuentas_por_cobrar')
+    else:
+        form = CuentaPorCobrarForm(instance=cuenta)
+    
+    return render(request, 'gestion/modificar_cuenta_por_cobrar.html', {'form': form, 'cuenta': cuenta})
+
+
+# =========================================================================
+# 11. REGISTRO Y MODIFICACIÓN DE CLIENTES, PRODUCTOS, COMPRAS Y CONFIGURACIÓN
+# =========================================================================
+
+def registrar_cliente(request):
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_clientes')
+    else:
+        form = ClienteForm()
+
+    return render(request, 'gestion/registrar_cliente.html', {'form': form})
+
+
+def crear_cliente(request):
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_clientes')
+    else:
+        form = ClienteForm()
+
+    return render(request, 'gestion/crear_cliente.html', {'form': form})
+
+
+def modificar_cliente(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, request.FILES, instance=cliente)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_clientes')
+    else:
+        form = ClienteForm(instance=cliente)
+    
+    return render(request, 'gestion/modificar_cliente.html', {'form': form, 'cliente': cliente})
+
+
+def registrar_producto(request):
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_productos')
+    else:
+        form = ProductoForm()
+
+    return render(request, 'gestion/registrar_producto.html', {'form': form})
+
+
+def registrar_compra(request):
+    if request.method == 'POST':
+        form = RegistroCompraForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_compras')
+    else:
+        form = RegistroCompraForm()
+
+    return render(request, 'gestion/registrar_compra.html', {'form': form})
+
+
+def editar_datos_empresa(request):
+    empresa = DatosEmpresa.objects.first()
+
+    if request.method == 'POST':
+        form = DatosEmpresaForm(request.POST, request.FILES, instance=empresa)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')
+    else:
+        form = DatosEmpresaForm(instance=empresa)
+
+    return render(request, 'gestion/datos_empresa.html', {'form': form})
+
+
+# =========================================================================
+# 12. REGISTRO Y MODIFICACIÓN DE PRESUPUESTOS (CON SOPORTE INLINE DE ÍTEMS)
+# =========================================================================
+
+def registrar_presupuesto(request):
+    ItemPresupuestoFormSet = inlineformset_factory(
+        Presupuesto, 
+        ItemPresupuesto, 
+        form=ItemPresupuestoForm, 
+        extra=3, 
+        can_delete=True
+    )
+
+    if request.method == 'POST':
+        form = PresupuestoForm(request.POST, request.FILES)
+        formset = ItemPresupuestoFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            presupuesto = form.save()
+            formset.instance = presupuesto
+            formset.save()
+            return redirect('lista_presupuestos')
+    else:
+        form = PresupuestoForm()
+        formset = ItemPresupuestoFormSet()
+
+    return render(request, 'gestion/registrar_presupuesto.html', {
+        'form': form,
+        'inline_formset': formset,
+        'editando': False
+    })
+
+
+def modificar_presupuesto(request, pk):
+    presupuesto = get_object_or_404(Presupuesto, pk=pk)
+    
+    ItemPresupuestoFormSet = inlineformset_factory(
+        Presupuesto, 
+        ItemPresupuesto, 
+        form=ItemPresupuestoForm, 
+        extra=1, 
+        can_delete=True
+    )
+
+    if request.method == 'POST':
+        form = PresupuestoForm(request.POST, request.FILES, instance=presupuesto)
+        formset = ItemPresupuestoFormSet(request.POST, instance=presupuesto)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return redirect('lista_presupuestos')
+    else:
+        form = PresupuestoForm(instance=presupuesto)
+        formset = ItemPresupuestoFormSet(instance=presupuesto)
+
+    return render(request, 'gestion/registrar_presupuesto.html', {
+        'form': form,
+        'inline_formset': formset,
+        'presupuesto': presupuesto,
+        'editando': True
+    })
+
+
+def eliminar_presupuesto(request, pk):
+    presupuesto = get_object_or_404(Presupuesto, pk=pk)
+    presupuesto.delete()
+    messages.success(request, f"El presupuesto #{pk} ha sido eliminado correctamente.")
+    return redirect('lista_presupuestos')
+
+
+# =========================================================================
+# 13. REGISTRO RÁPIDO DE PROVEEDOR (MODAL FRONTEND)
+# =========================================================================
+
+def crear_proveedor_modal(request):
+    if request.method == "POST":
+        nombre = request.POST.get("nombre")
+        telefono = request.POST.get("telefono")
+        if nombre:
+            Proveedor.objects.create(nombre=nombre, telefono=telefono)
+        return redirect(request.META.get("HTTP_REFERER", "registrar_producto"))
+    return redirect("registrar_producto")
+
+
+# =========================================================================
+# 14. REGISTRO DE TRABAJOS Y GESTIÓN DETALLADA DE OBRAS / GASTOS
+# =========================================================================
+
+def crear_trabajo(request):
+    if request.method == 'POST':
+        form = TrabajoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_trabajos')
+    else:
+        form = TrabajoForm()
+     
+    return render(request, 'gestion/registrar_trabajo.html', {'form': form})
+
+
+def detalle_trabajo(request, pk):
+    trabajo = get_object_or_404(Trabajo, pk=pk)
+    gastos = GastoObra.objects.filter(trabajo=trabajo)
+    fotos = FotoTrabajo.objects.filter(trabajo=trabajo)
+
+    form_gasto = GastoObraForm()
+    form_foto = FotoTrabajoForm()
+
+    if request.method == 'POST':
+        if 'registrar_gasto' in request.POST:
+            form_gasto = GastoObraForm(request.POST)
+            if form_gasto.is_valid():
+                gasto = form_gasto.save(commit=False)
+                gasto.trabajo = trabajo
+                gasto.save()
+                return redirect('detalle_trabajo', pk=trabajo.pk)
+                
+        elif 'registrar_foto' in request.POST:
+            form_foto = FotoTrabajoForm(request.POST, request.FILES)
+            if form_foto.is_valid():
+                foto = form_foto.save(commit=False)
+                foto.trabajo = trabajo
+                foto.save()
+                return redirect('detalle_trabajo', pk=trabajo.pk)
+
+    context = {
+        'trabajo': trabajo,
+        'gastos': gastos,
+        'fotos': fotos,
+        'form_gasto': form_gasto,
+        'form_foto': form_foto,
+    }
+    return render(request, 'gestion/detalle_trabajo.html', context)
+
+# =========================================================================
+# 15. GESTIÓN DE USUARIOS Y NIVELES
+# =========================================================================
+
+def lista_usuarios(request):
+    return render(request, 'gestion/lista_usuarios.html')
+
+def lista_usuarios(request):
+    usuarios = User.objects.all().order_by('username')
+    return render(request, 'gestion/lista_usuarios.html', {'usuarios': usuarios})
+
+def crear_usuario(request):
+    # Lógica para mostrar y procesar el formulario de creación
+    return render(request, 'gestion/form_usuario.html')
+
+def editar_usuario(request, user_id):
+    usuario = get_object_or_404(User, pk=user_id)
+    # Lógica para cargar los datos del usuario en el formulario y guardarlos
+    return render(request, 'gestion/form_usuario.html', {'usuario': usuario})

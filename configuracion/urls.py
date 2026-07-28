@@ -1,44 +1,93 @@
-from django.contrib import admin
-from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from gestion import views  # Importamos las pantallas del sistema
+from django.contrib import admin
+from django.urls import path
+from gestion import views
 
 urlpatterns = [
-    # 1. PÁGINA DE INICIO PRINCIPAL (DASHBOARD PREMIUM OSCURO)
-    path('', views.dashboard_principal, name='dashboard'),
-    
-    # INTERCEPCIÓN MÁGICA: Obliga al panel interno a usar tu login oscuro premium
-    path('admin/login/', views.vista_login_personalizado, name='admin_login_custom'),
-    
-    # 2. MOTOR DE ADMINISTRACIÓN NATIVO DE DJANGO
-    path('admin/', admin.site.urls),
-    
-    # 3. PANTALLA EXCLUSIVA PARA TÉCNICOS EN EL CELULAR
-    path('mis-trabajos/', views.pantalla_tecnicos, name='pantalla_tecnicos'),
-    
-    # 4. REPORTES ADMINISTRATIVOS Y AUDITORÍA DE GANANCIAS
-    path('reporte-financiero/', views.reporte_financiero, name='reporte_financiero'),
-    
-    # 5. IMPRENTA AUTOMÁTICA DE COTIZACIONES Y FORMATO PDF
-    path('presupuesto/<int:presupuesto_id>/imprimir/', views.vista_imprimir_presupuesto, name='imprimir_presupuesto'),
-    
-    # 6. INICIO DE SESIÓN ESTÁNDAR VISUAL E INTUITIVO
-    path('login/', views.vista_login_personalizado, name='login'),
-    
     # =========================================================================
-    # RUTAS DEL ENTORNO INTUITIVO PREMIUM (PANTALLAS INTERNAS PERSONALIZADAS)
+    # 1. PANEL DE ADMINISTRACIÓN Y AUTENTICACIÓN
     # =========================================================================
-    path('clientes/', views.vista_lista_clientes, name='lista_clientes'),
-    path('productos/', views.vista_lista_productos, name='lista_productos'),
-    path('trabajos/', views.vista_lista_trabajos, name='lista_trabajos'),
-    path('presupuestos/', views.vista_lista_presupuestos, name='lista_presupuestos'),
-    path('compras/', views.vista_lista_compras, name='lista_compras'),
+    path("admin/", admin.site.urls),
+    path("admin/login/", views.vista_login_personalizado, name="admin_login_custom"),
+    path("login/", views.vista_login_personalizado, name="login"),
+
+    # =========================================================================
+    # 2. DASHBOARD Y TÉCNICOS
+    # =========================================================================
+    path("", views.dashboard_principal, name="dashboard"),
+    path("mis-trabajos/", views.pantalla_tecnicos, name="pantalla_tecnicos"),
+    path("tecnicos/mis-trabajos/", views.mis_trabajos, name="mis_trabajos"),
+
+    # =========================================================================
+    # 3. MÓDULO DE CLIENTES
+    # =========================================================================
+    path("clientes/", views.vista_lista_clientes, name="lista_clientes"),
+    path("clientes/nuevo/", views.crear_cliente, name="registrar_cliente"),
+    path("clientes/editar/<int:pk>/", views.modificar_cliente, name="modificar_cliente"),
+
+    # =========================================================================
+    # 4. PRODUCTOS Y PROVEEDORES
+    # =========================================================================
+    path("productos/", views.vista_lista_productos, name="lista_productos"),
+    path("productos/nuevo/", views.registrar_producto, name="registrar_producto"),
+    path("proveedores/crear-rapido/", views.crear_proveedor_modal, name="crear_proveedor_modal"),
+
+    # =========================================================================
+    # 5. TRABAJOS Y OBRAS
+    # =========================================================================
+    path("trabajos/", views.vista_lista_trabajos, name="lista_trabajos"),
+    path("trabajos/nuevo/", views.crear_trabajo, name="crear_trabajo"),
+    path("trabajos/detalle/<int:pk>/", views.detalle_trabajo, name="detalle_trabajo"), # <--- NUEVA RUTA INTEGRADA
+
+    # =========================================================================
+    # 6. PRESUPUESTOS Y ERP
+    # =========================================================================
+    path("presupuestos/", views.vista_lista_presupuestos, name="lista_presupuestos"),
+    path("presupuestos/nuevo/", views.registrar_presupuesto, name="registrar_presupuesto"),
+    path("presupuestos/editar/<int:pk>/", views.modificar_presupuesto, name="modificar_presupuesto"),
+    path("presupuestos/eliminar/<int:pk>/", views.eliminar_presupuesto, name="eliminar_presupuesto"),
+    path("presupuesto/<int:presupuesto_id>/imprimir/", views.vista_imprimir_presupuesto, name="imprimir_presupuesto"),
+    path("presupuesto/<int:presupuesto_id>/aprobar-erp/", views.procesar_aprobacion_erp, name="aprobar_erp"),
+
+    # =========================================================================
+    # 7. ÓRDENES DE COMPRA
+    # =========================================================================
+    path("compras/", views.vista_lista_compras, name="lista_compras"),
+    path("compras/nueva/", views.registrar_compra, name="registrar_compra"),
+
+    # =========================================================================
+    # 8. FINANZAS Y REPORTES
+    # =========================================================================
+    path("reporte-financiero/", views.reporte_financiero, name="reporte_financiero"),
+    path("finanzas/", views.reporte_ganancias_perdidas, name="reporte_financiero_nuevo"),
+    path("finanzas/nueva/", views.registrar_transaccion, name="registrar_transaccion"),
+
+    # =========================================================================
+    # 9. CUENTAS POR PAGAR Y COBRAR
+    # =========================================================================
+    path("cuentas-por-pagar/", views.lista_cuentas_por_pagar, name="cuentas_por_pagar"),
+    path("cuentas-por-pagar/nueva/", views.registrar_cuenta_por_pagar, name="registrar_cxp"),
+    path("cuentas-por-pagar/ver/<int:pk>/", views.ver_cuenta_por_pagar, name="ver_cuenta_por_pagar"),
+    path("cuentas-por-pagar/editar/<int:pk>/", views.modificar_cuenta_por_pagar, name="modificar_cuenta_por_pagar"),
     
-    # DISPARADOR DEL MOTOR ERP AUTOMATIZADO (DESCUENTA STOCK Y CREA OBRA)
-    path('presupuesto/<int:presupuesto_id>/aprobar-erp/', views.procesar_aprobacion_erp, name='aprobar_erp'),
+    path("cuentas-por-cobrar/", views.lista_cuentas_por_cobrar, name="lista_cuentas_por_cobrar"),
+    path("cuentas-por-cobrar/nueva/", views.registrar_cuenta_por_cobrar, name="registrar_cxc"),
+    path("cuentas-por-cobrar/ver/<int:pk>/", views.ver_cuenta_por_cobrar, name="ver_cuenta_por_cobrar"),
+    path("cuentas-por-cobrar/editar/<int:pk>/", views.modificar_cuenta_por_cobrar, name="modificar_cuenta_por_cobrar"),
+
+    # =========================================================================
+    # 10. CONFIGURACIÓN DE LA EMPRESA
+    # =========================================================================
+    path("empresa/configurar/", views.editar_datos_empresa, name="datos_empresa"),
+
+  # =========================================================================
+    # 11. USUARIOS
+    # =========================================================================
+    path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
+    path('usuarios/nuevo/', views.crear_usuario, name='crear_usuario'),
+    path('usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
 ]
 
-# Esto permite que Django pueda mostrar los logotipos y fotos en el navegador de forma local
 if settings.MEDIA_URL and settings.MEDIA_ROOT:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

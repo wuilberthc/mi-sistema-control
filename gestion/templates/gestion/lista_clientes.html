@@ -1,107 +1,84 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Clientes - TECNOLOGY CENTER</title>
-    <style>
-        body { background-color: #0f172a; font-family: sans-serif; margin: 0; padding: 0; display: flex; color: #f8fafc; }
-        .sidebar { width: 260px; background-color: #1e293b; min-height: 100vh; color: white; padding-top: 25px; box-sizing: border-box; }
-        .sidebar-titulo { text-align: center; margin-bottom: 35px; }
-        .sidebar-titulo h3 { color: #38bdf8; margin: 0; }
-        .sidebar a { color: #94a3b8; text-decoration: none; padding: 14px 22px; display: block; font-weight: bold; font-size: 14px; margin: 6px 14px; border-radius: 8px; }
-        .sidebar a:hover { background-color: #334155; color: #38bdf8; }
-        .sidebar a.active { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; }
+{% extends 'gestion/base.html' %}
 
-        .contenido { flex: 1; padding: 30px; box-sizing: border-box; }
-        .barra-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-        .barra-top h2 { margin: 0; font-size: 24px; }
-        
-        /* Botones e Interfaz Intuitiva */
-        .btn-primario { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; text-decoration: none; padding: 12px 24px; font-weight: bold; border-radius: 8px; font-size: 14px; display: inline-block; transition: 0.2s; }
-        .btn-primario:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
-        .btn-modificar { background-color: #eab308; color: #0f172a; padding: 6px 12px; text-decoration: none; font-weight: bold; border-radius: 4px; font-size: 12px; }
-
-        /* Tabla Inteligente de Clientes */
-        .tabla-contenedor { background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 14px; border-bottom: 1px solid #334155; }
-        th { color: #38bdf8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { font-size: 14px; color: #cbd5e1; }
-        .miniatura-cliente { width: 45px; height: 45px; object-fit: cover; border-radius: 50%; border: 2px solid #334155; }
-    </style>
-</head>
-<body>
-
-    <!-- MENÚ LATERAL -->
-    <div class="sidebar">
-        <div class="sidebar-titulo">
-            <h3>🛠️ CONTROL PRO</h3>
-            <small style="color: #64748b;">TECNOLOGY CENTER</small>
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i> Listado de Clientes</h5>
+        <div class="d-flex gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-light btn-sm"></i>🏠  Menú Principal
+            </a>
+            <a href="{% url 'registrar_cliente' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus-circle me-1"></i> Nuevo Cliente
+            </a>
         </div>
-        <a href="/">🏠 Inicio / Resumen</a>
-        <a href="/clientes/" class="active">👥 Control de Clientes</a>
-        <a href="/trabajos/">👷 Trabajos y Obras</a>
-        <a href="/mis-trabajos/">📱 Pantalla Tecnicos</a>
-        <a href="/productos/">📦 Inventario / Stock</a>
-        <a href="/presupuestos/">📄 Presupuestos</a>
-        <a href="/reporte-financiero/">📊 Reporte Financiero</a>
-        <a href="/admin/gestion/datosempresa/">⚙️ Datos de mi Empresa</a>
     </div>
-
-    <!-- CONTENIDO CENTRAL -->
-    <div class="contenido">
-        <div class="barra-top">
-            <h2>👥 Listado de Clientes Registrados</h2>
-            <!-- Botón directo para añadir usando el motor de Django sin perder el mapa -->
-            <a href="/admin/gestion/cliente/add/" class="btn-primario">➕ Registrar Nuevo Cliente</a>
-        </div>
-
-        <div class="tabla-contenedor">
-            {% if lista_clientes %}
-            <table>
-                <thead>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary text-uppercase fs-7">
                     <tr>
-                        <th>Foto</th>
+                        <th class="ps-3">Foto</th>
                         <th>Nombre Completo</th>
-                        <th>Teléfono de Contacto</th>
-                        <th>Ubicación GPS</th>
-                        <th>Acción</th>
+                        <th>Rif / Cédula</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>GPS</th>
+                        <th class="text-end pe-3">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for cliente in lista_clientes %}
                     <tr>
-                        <td>
+                        <td class="ps-3">
                             {% if cliente.foto %}
-                                <img src="{{ cliente.foto.url }}" class="miniatura-cliente">
+                                <img src="{{ cliente.foto.url }}" alt="Foto" width="42" height="42" class="rounded-circle shadow-sm object-fit-cover">
                             {% else %}
-                                <span style="font-size: 24px;">👤</span>
+                                <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
                             {% endif %}
                         </td>
-                        <td><strong>{{ cliente.nombre }}</strong></td>
-                        <td>{{ cliente.telefono|default:"No registrado" }}</td>
+                        <td>
+                            <span class="fw-bold text-dark">{{ cliente.nombre }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">{{ cliente.rif_cedula|default:"N/A" }}</span>
+                        </td>
+                        <td>
+                            <span class="text-muted"><i class="fas fa-phone-alt fa-xs me-1 text-secondary"></i>{{ cliente.telefono|default:"N/A" }}</span>
+                        </td>
+                        <td>
+                            <span class="text-truncate d-inline-block text-muted" style="max-width: 200px;" title="{{ cliente.direccion }}">
+                                {{ cliente.direccion|default:"Sin dirección" }}
+                            </span>
+                        </td>
                         <td>
                             {% if cliente.latitud and cliente.longitud %}
-                                <span style="color: #22c55e;">✅ Coordenadas OK</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                    <i class="fas fa-map-marker-alt me-1"></i> Ubicado
+                                </span>
                             {% else %}
-                                <span style="color: #ef4444;">❌ Sin Ubicación</span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                    <i class="fas fa-times-circle me-1"></i> Sin GPS
+                                </span>
                             {% endif %}
                         </td>
-                        <td>
-                            <a href="/admin/gestion/cliente/{{ cliente.id }}/change/" class="btn-modificar">📝 Modificar / Ver Mapa</a>
+                        <td class="text-end pe-3">
+                            <a href="{% url 'modificar_cliente' cliente.id %}" class="btn btn-outline-warning btn-sm" title="Modificar / Ver Mapa">
+                                <i class="fas fa-edit"></i> Modificar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="fas fa-folder-open fa-2x mb-2 d-block"></i> No hay clientes registrados actualmente.
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            {% else %}
-            <div style="text-align: center; padding: 30px; color: #94a3b8;">
-                <p style="font-size: 16px; margin: 0;">No tienes ningún cliente registrado en tu base de datos todavía.</p>
-            </div>
-            {% endif %}
         </div>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

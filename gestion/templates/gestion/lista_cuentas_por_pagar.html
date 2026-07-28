@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIENDA TECHNOLOGY - Cuentas por Pagar</title>
+    <style>
+        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; padding: 30px; color: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: #1e293b; padding: 20px 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h2 { margin: 0; color: #38bdf8; font-size: 24px; }
+        .btn { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.2s; display: inline-block; }
+        .btn:hover { background: linear-gradient(135deg, #38bdf8, #0284c7); transform: translateY(-2px); }
+        .btn-volver { background: #475569; margin-right: 10px; }
+        .btn-accion { padding: 6px 10px; border-radius: 6px; font-size: 14px; margin-right: 4px; text-decoration: none; display: inline-block; }
+        .btn-ver { background: #0284c7; color: white; }
+        .btn-ver:hover { background: #38bdf8; }
+        .btn-editar { background: #d97706; color: white; }
+        .btn-editar:hover { background: #f59e0b; }
+        .table-container { background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid #334155; font-size: 14px; }
+        th { color: #94a3b8; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        td { color: #f8fafc; }
+        tr:hover { background-color: #334155; }
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+        .badge-pendiente { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .badge-pagado { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>💳 Módulo de Cuentas por Pagar</h2>
+            <div>
+                <a href="/" class="btn btn-volver">🏠 Volver al Menú</a>
+                <a href="{% url 'registrar_cxp' %}" class="btn">➕ Registrar Deuda</a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Proveedor</th>
+                        <th>Concepto</th>
+                        <th>Monto Deuda</th>
+                        <th>Monto Pagado</th>
+                        <th>Vencimiento</th>
+                        <th>Estado</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cuentas %}
+                    <tr>
+                        <td><strong>{{ item.proveedor }}</strong></td>
+                        <td>{{ item.concepto }}</td>
+                        <td>${{ item.monto_deuda }}</td>
+                        <td>${{ item.monto_pagado }}</td>
+                        <td>{{ item.fecha_vencimiento }}</td>
+                        <td>
+                            {% if item.estado == 'PAG' %}
+                                <span class="badge badge-pagado">Pagado</span>
+                            {% else %}
+                                <span class="badge badge-pendiente">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="{% url 'ver_cuenta_por_pagar' item.id %}" class="btn-accion btn-ver" title="Ver detalles">👁️</a>
+                            <a href="{% url 'modificar_cuenta_por_pagar' item.id %}" class="btn-accion btn-editar" title="Modificar deuda">✏️</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #94a3b8; padding: 40px;">No hay cuentas por pagar registradas actualmente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

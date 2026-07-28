@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIENDA TECHNOLOGY - Detalle de Trabajo</title>
+    <style>
+        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; padding: 30px; color: #f8fafc; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: #1e293b; padding: 20px 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h2 { margin: 0; color: #38bdf8; font-size: 24px; }
+        .btn { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.2s; display: inline-block; border: none; cursor: pointer; }
+        .btn:hover { background: linear-gradient(135deg, #38bdf8, #0284c7); transform: translateY(-2px); }
+        .btn-volver { background: #475569; margin-right: 10px; }
+        .card { background: #1e293b; border-radius: 12px; padding: 25px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); margin-bottom: 25px; }
+        .card h3 { color: #38bdf8; margin-top: 0; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .info-item { background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; }
+        .info-item label { display: block; color: #94a3b8; font-size: 12px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        .info-item span { color: #f8fafc; font-size: 16px; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 15px; }
+        th, td { padding: 12px 16px; border-bottom: 1px solid #334155; font-size: 14px; }
+        th { color: #94a3b8; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+        tr:hover { background-color: #334155; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: #94a3b8; font-size: 13px; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
+        .form-inline { display: grid; grid-template-columns: 2fr 1fr auto; gap: 15px; align-items: end; }
+        
+        /* Galería de Fotos */
+        .galeria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-top: 15px; }
+        .foto-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden; padding: 10px; text-align: center; }
+        .foto-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; }
+        .foto-card p { color: #cbd5e1; font-size: 12px; margin: 0; }
+        .footer-acciones { text-align: right; margin-top: 30px; margin-bottom: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🛠️ Trabajo: {{ trabajo.titulo }}</h2>
+            <div>
+                <a href="{% url 'lista_trabajos' %}" class="btn btn-volver">🔙 Volver al Listado</a>
+            </div>
+        </div>
+
+        <!-- Información General del Trabajo -->
+        <div class="card">
+            <h3>Información General</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Cliente</label>
+                    <span>{{ trabajo.cliente }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Técnico Asignado</label>
+                    <span>{{ trabajo.tecnico }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Estado</label>
+                    <span>{{ trabajo.get_estado_display|default:trabajo.estado }}</span>
+                </div>
+                <div class="info-item">
+                    <label>Monto Cobrado</label>
+                    <span style="color: #22c55e;">${{ trabajo.monto_cobrado }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Fotos del Trabajo -->
+        <div class="card">
+            <h3>📸 Fotos del Trabajo / Evidencias</h3>
+            
+            <form method="POST" enctype="multipart/form-data" class="form-inline" style="margin-bottom: 25px;">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Seleccionar Imagen</label>
+                    {{ form_foto.foto }}
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Descripción / Nota</label>
+                    {{ form_foto.descripcion }}
+                </div>
+                <div style="margin-bottom: 0;">
+                    <button type="submit" name="registrar_foto" class="btn" style="height: 42px;">📷 Subir Foto</button>
+                </div>
+            </form>
+
+            <div class="galeria-grid">
+                {% for foto in fotos %}
+                <div class="foto-card">
+                    <a href="{{ foto.foto.url }}" target="_blank">
+                        <img src="{{ foto.foto.url }}" alt="Evidencia de trabajo">
+                    </a>
+                    <p>{{ foto.descripcion|default:"Sin descripción" }}</p>
+                    <small style="color: #64748b; font-size: 10px;">{{ foto.fecha }}</small>
+                </div>
+                {% empty %}
+                <div style="grid-column: 1 / -1; text-align: center; color: #94a3b8; padding: 20px;">
+                    No hay fotos registradas para este trabajo todavía.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sección de Gastos de Obra -->
+        <div class="card">
+            <h3>💰 Gastos Asociados al Trabajo</h3>
+            
+            <form method="POST" class="form-inline" style="margin-bottom: 25px;">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Descripción del Gasto</label>
+                    {{ form_gasto.descripcion }}
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Monto ($)</label>
+                    {{ form_gasto.monto }}
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Fecha</label>
+                    {{ form_gasto.fecha }}
+                </div>
+                <button type="submit" name="registrar_gasto" class="btn" style="height: 42px;">➕ Agregar Gasto</button>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                        <th style="text-align: right;">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for gasto in gastos %}
+                    <tr>
+                        <td>{{ gasto.descripcion }}</td>
+                        <td>{{ gasto.fecha }}</td>
+                        <td style="text-align: right; color: #ef4444; font-weight: bold;">${{ gasto.monto }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #94a3b8; padding: 20px;">No hay gastos registrados para este trabajo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Botón Inferior para Regresar -->
+        <div class="footer-acciones">
+            <a href="{% url 'lista_trabajos' %}" class="btn btn-volver" style="padding: 12px 30px; font-size: 16px;">🔙 Volver al Listado de Trabajos</a>
+        </div>
+    </div>
+</body>
+</html>

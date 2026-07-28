@@ -3,23 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Campo</title>
+    <title>Panel de Campo - Control-Pro</title>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; color: #333; }
-        .barra { background-color: #222; color: white; padding: 15px; margin: -20px -20px 20px -20px; font-weight: bold; }
+        .barra { background-color: #222; color: white; padding: 15px 20px; margin: -20px -20px 20px -20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .btn-menu-principal { background-color: #38bdf8; color: #0f172a; padding: 8px 14px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; transition: background-color 0.2s; }
+        .btn-menu-principal:hover { background-color: #0ea5e9; color: white; }
         .tarjeta { background: white; border: 1px solid #ddd; border-radius: 5px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .titulo { color: #0066cc; margin-top: 0; }
         .estado { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 12px; font-weight: bold; background: #eee; }
         .campo { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; }
         input[type="file"], textarea, select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background-color: #28a745; color: white; border: none; padding: 10px 15px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #218838; }
+        button[type="submit"] { background-color: #28a745; color: white; border: none; padding: 10px 15px; width: 100%; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button[type="submit"]:hover { background-color: #218838; }
     </style>
 </head>
 <body>
 
-    <div class="barra">👷 Control de Obras en Campo</div>
+    <div class="barra">
+        <span>👷 Control de Obras en Campo</span>
+        <a href="{% url 'dashboard' %}" class="btn-menu-principal">
+            <i class="fas fa-home"></i> Menú Principal
+        </a>
+    </div>
 
     <div class="contenedor">
         <h3>Mis Trabajos Asignados</h3>

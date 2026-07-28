@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+{% extends 'gestion/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card bg-dark text-white shadow p-4 border-secondary">
+        <h2 class="mb-4 text-white">Registrar Nuevo Cliente</h2>
+        
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success">Guardar Cliente</button>
+            </div>
+        </form>
+        
+        <div class="mt-3">
+            <a href="{% url 'lista_clientes' %}" class="btn btn-outline-light">Volver a la lista</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Cliente</title>
+</head>
+<body>
+    <div class="container">
+        <h2>Registrar Nuevo Cliente</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success">Guardar Cliente</button>
+        </form>
+        <br>
+        <a href="{% url 'lista_clientes' %}">Volver a la lista</a>
+    </div>
+</body>
+</html>

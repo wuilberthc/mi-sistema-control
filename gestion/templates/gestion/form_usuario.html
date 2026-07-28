@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIENDA TECHNOLOGY - Gestión de Usuario</title>
+    <style>
+        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; padding: 30px; color: #f8fafc; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: #1e293b; padding: 20px 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h2 { margin: 0; color: #38bdf8; font-size: 24px; }
+        .btn { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 700; transition: all 0.2s; display: inline-block; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: linear-gradient(135deg, #38bdf8, #0284c7); transform: translateY(-2px); }
+        .btn-volver { background: #475569; }
+        .btn-success { background: linear-gradient(135deg, #16a34a, #15803d); width: 100%; padding: 12px; font-size: 16px; margin-top: 15px; }
+        .btn-success:hover { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .card { background: #1e293b; border-radius: 12px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: #94a3b8; font-weight: 600; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; font-size: 15px; box-sizing: border-box; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #38bdf8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>👥 {% if usuario %}Modificar Usuario{% else %}Nuevo Usuario{% endif %}</h2>
+            <div>
+                <a href="{% url 'lista_usuarios' %}" class="btn btn-volver">🔙 Volver</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">Nombre de Usuario</label>
+                    <input type="text" id="username" name="username" value="{{ usuario.username|default:'' }}" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" value="{{ usuario.email|default:'' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña {% if usuario %}(Dejar en blanco para mantener la actual){% endif %}</label>
+                    <input type="password" id="password" name="password" {% if not usuario %}required{% endif %}>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipo_usuario">Nivel / Permisos</label>
+                    <select id="tipo_usuario" name="tipo_usuario">
+                        <option value="tecnico" {% if usuario and not usuario.is_superuser %}selected{% endif %}>Técnico / Estándar</option>
+                        <option value="admin" {% if usuario and usuario.is_superuser %}selected{% endif %}>Administrador Total</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-success">💾 Guardar Usuario</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
