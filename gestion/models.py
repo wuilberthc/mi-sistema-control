@@ -278,14 +278,18 @@ class ItemPresupuesto(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre}"
-    # =========================================================================
+
+
+# =========================================================================
 # 8. CUENTAS POR COBRAR Y CUENTAS POR PAGAR (Finanzas)
 # =========================================================================
+
+
 class CuentaPorCobrar(models.Model):
     ESTADOS = [
-        ('PEND', 'Pendiente'),
-        ('PAG', 'Pagado'),
-        ('VENC', 'Vencido'),
+        ("PEND", "Pendiente"),
+        ("PAG", "Pagado"),
+        ("VENC", "Vencido"),
     ]
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
     concepto = models.CharField(max_length=200, verbose_name="Concepto")
@@ -293,17 +297,18 @@ class CuentaPorCobrar(models.Model):
     monto_cobrado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Monto Abonado / Cobrado")
     fecha_emision = models.DateField(verbose_name="Fecha de Emisión")
     fecha_vencimiento = models.DateField(verbose_name="Fecha de Vencimiento")
-    estado = models.CharField(max_length=4, choices=ESTADOS, default='PEND', verbose_name="Estado")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default="PEND", verbose_name="Estado")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones")
 
     def __str__(self):
         return f"CxC - {self.cliente.nombre} (${self.monto_deuda})"
 
+
 class CuentaPorPagar(models.Model):
     ESTADOS = [
-        ('PEND', 'Pendiente'),
-        ('PAG', 'Pagado'),
-        ('VENC', 'Vencido'),
+        ("PEND", "Pendiente"),
+        ("PAG", "Pagado"),
+        ("VENC", "Vencido"),
     ]
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, verbose_name="Proveedor")
     concepto = models.CharField(max_length=200, verbose_name="Concepto / Factura")
@@ -311,18 +316,19 @@ class CuentaPorPagar(models.Model):
     monto_pagado = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Monto Pagado")
     fecha_emision = models.DateField(verbose_name="Fecha de Emisión")
     fecha_vencimiento = models.DateField(verbose_name="Fecha de Vencimiento")
-    estado = models.CharField(max_length=4, choices=ESTADOS, default='PEND', verbose_name="Estado")
+    estado = models.CharField(max_length=4, choices=ESTADOS, default="PEND", verbose_name="Estado")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones")
 
     def __str__(self):
         return f"CxP - {self.proveedor.nombre} (${self.monto_deuda})"
 
+
 class Transaccion(models.Model):
     TIPOS = [
-        ('ING', 'Ingreso'),
-        ('EGR', 'Egreso'),
+        ("ING", "Ingreso"),
+        ("EGR", "Egreso"),
     ]
-    tipo = models.CharField(max_length=3, choices=TIPOS, default='ING', verbose_name="Tipo de Movimiento")
+    tipo = models.CharField(max_length=3, choices=TIPOS, default="ING", verbose_name="Tipo de Movimiento")
     concepto = models.CharField(max_length=150, verbose_name="Concepto")
     monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto")
     categoria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Categoría")
@@ -331,3 +337,44 @@ class Transaccion(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.concepto} (${self.monto})"
+
+
+# =========================================================================
+# 9. AGENDA DE VISITAS Y TRABAJOS EN CAMPO
+# =========================================================================
+
+
+class VisitaCampo(models.Model):
+    TIPO_VISITA_CHOICES = [
+        ("GRATIS", "Visita de Cortesía / Diagnóstico (Gratis)"),
+        ("COBRADA", "Visita Técnica Facturable"),
+    ]
+    
+    ESTADO_CHOICES = [
+        ("PEND", "Programada"),
+        ("PROC", "En Proceso"),
+        ("COMP", "Completada / Finalizada"),
+        ("CANC", "Cancelada"),
+    ]
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, verbose_name="Cliente")
+    tecnico = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Técnico Asignado",
+    )
+    fecha_programada = models.DateTimeField(verbose_name="Fecha y Hora de la Visita")
+    tipo = models.CharField(max_length=10, choices=TIPO_VISITA_CHOICES, default="GRATIS", verbose_name="Tipo de Visita")
+    monto_cobro = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Costo / Cobro de Visita")
+    estado = models.CharField(max_length=4, choices=ESTADO_CHOICES, default="PEND", verbose_name="Estado")
+    observaciones = models.TextField(blank=True, null=True, verbose_name="Notas / Requerimiento en Sitio")
+    genera_trabajo = models.BooleanField(default=False, verbose_name="¿Derivó en Orden de Trabajo / Presupuesto?")
+
+    class Meta:
+        verbose_name = "Agenda de Visita en Campo"
+        verbose_name_plural = "Agenda de Visitas en Campo"
+
+    def __str__(self):
+        return f"Visita #{self.id} - {self.cliente.nombre} ({self.get_tipo_display()})"

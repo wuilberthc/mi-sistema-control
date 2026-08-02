@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programar Visita - TIENDA TECHNOLOGY</title>
+    <style>
+        body { background-color: #0f172a; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; display: flex; color: #f8fafc; }
+        .sidebar { width: 260px; background-color: #1e293b; min-height: 100vh; color: white; padding-top: 25px; box-sizing: border-box; }
+        .sidebar-titulo { text-align: center; margin-bottom: 35px; padding: 0 15px; }
+        .sidebar-titulo h3 { color: #38bdf8; margin: 0; font-size: 22px; font-weight: 800; }
+        .sidebar-titulo small { color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .sidebar a { color: #94a3b8; text-decoration: none; padding: 14px 22px; display: block; font-weight: 600; font-size: 14px; border-radius: 8px; margin: 6px 14px; }
+        .sidebar a:hover { background-color: #334155; color: #38bdf8; }
+        .sidebar a.active { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; }
+
+        .contenido { flex: 1; padding: 40px; box-sizing: border-box; }
+        .formulario-contenedor { background: #1e293b; border-radius: 12px; padding: 35px; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border-top: 4px solid #38bdf8; }
+        h2 { margin-top: 0; color: #f8fafc; font-size: 22px; margin-bottom: 25px; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #94a3b8; font-size: 13px; text-transform: uppercase; }
+        .form-control { width: 100%; padding: 12px; background-color: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .form-control:focus { outline: none; border-color: #38bdf8; }
+        
+        .btn-submit { background: linear-gradient(135deg, #22c55e, #15803d); color: white; border: none; padding: 12px 25px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%; transition: 0.2s; text-transform: uppercase; }
+        .btn-submit:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-volver { display: inline-block; margin-top: 15px; color: #94a3b8; text-decoration: none; font-size: 13px; font-weight: 600; }
+        .btn-volver:hover { color: #38bdf8; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-titulo">
+            <h3>🛠️ CONTROL PRO</h3>
+            <small>TIENDA TECHNOLOGY</small>
+        </div>
+        <a href="{% url 'dashboard' %}">🏠 Inicio / Resumen</a>
+        <a href="{% url 'lista_clientes' %}">👥 Control de Clientes</a>
+        <a href="{% url 'lista_visitas' %}" class="active">📅 Agenda de Visitas</a>
+        <a href="{% url 'lista_trabajos' %}">🛠️ Trabajos y Obras</a>
+        <a href="{% url 'reporte_financiero' %}">📊 Reporte Financiero</a>
+    </div>
+
+    <div class="contenido">
+        <div class="formulario-contenedor">
+            <h2>📅 Programar Nueva Visita a Campo</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn-submit">💾 Guardar Visita</button>
+            </form>
+            <a href="{% url 'lista_visitas' %}" class="btn-volver">← Volver a la Agenda</a>
+        </div>
+    </div>
+
+</body>
+</html>

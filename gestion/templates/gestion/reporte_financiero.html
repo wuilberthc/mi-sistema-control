@@ -100,10 +100,10 @@
                         <td>{{ r.trabajo.titulo }}</td>
                         <td>{{ r.trabajo.cliente.nombre }}</td>
                         <td>{{ r.trabajo.get_estado_display }}</td>
-                        <td class="text-right">${{ r.monto_cobrado }}</td>
-                        <td class="text-right">${{ r.gastos_campo }}</td>
+                        <td class="text-right">${{ r.monto_cobrado|floatformat:2 }}</td>
+                        <td class="text-right">${{ r.gastos_campo|floatformat:2 }}</td>
                         <td class="text-right {% if r.ganancia_neta >= 0 %}ganancia-positiva{% else %}ganancia-negativa{% endif %}">
-                            ${{ r.ganancia_neta }}
+                            ${{ r.ganancia_neta|floatformat:2 }}
                         </td>
                     </tr>
                     {% endfor %}

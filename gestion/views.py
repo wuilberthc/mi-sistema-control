@@ -4,10 +4,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import F, Sum
 from django.forms import inlineformset_factory
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.models import User
-
-
 
 from .forms import (
     ClienteForm,
@@ -22,6 +21,7 @@ from .forms import (
     RegistroCompraForm,
     TrabajoForm,
     TransaccionForm,
+    VisitaCampoForm,
 )
 from .models import (
     Cliente,
@@ -37,6 +37,7 @@ from .models import (
     RegistroCompra,
     Trabajo,
     Transaccion,
+    VisitaCampo,
 )
 
 
@@ -51,6 +52,7 @@ def dashboard_principal(request):
         'terminadas': Trabajo.objects.filter(estado='TERM').count(),
         'presupuestos': Presupuesto.objects.filter(estado='BORR').count(),
         'alerta_stock': Producto.objects.filter(stock_actual__lte=F('stock_minimo')).count(),
+        'visitas_pendientes': VisitaCampo.objects.filter(estado='PEND').count(),
     }
     return render(request, 'gestion/dashboard.html', context)
 
@@ -345,23 +347,14 @@ def ver_cuenta_por_pagar(request, pk):
 
 def modificar_cuenta_por_pagar(request, pk):
     cuenta = get_object_or_404(CuentaPorPagar, pk=pk)
-    monto_pagado_anterior = cuenta.monto_pagado 
+    monto_pagado_anterior = float(cuenta.monto_pagado)
 
     if request.method == 'POST':
         form = CuentaPorPagarForm(request.POST, instance=cuenta)
         if form.is_valid():
-            cuenta_actualizada = form.save(commit=False)
-            
-            if float(cuenta_actualizada.monto_pagado) >= float(cuenta_actualizada.monto_deuda):
-                cuenta_actualizada.estado = 'PAG'
-            else:
-                cuenta_actualizada.estado = 'PEND'
-            
-            cuenta_actualizada.save()
-            
-            CuentaPorPagar.objects.filter(pk=cuenta.pk).update(estado=cuenta_actualizada.estado)
+            cuenta_actualizada = form.save()
 
-            diferencia_pago = float(cuenta_actualizada.monto_pagado) - float(monto_pagado_anterior)
+            diferencia_pago = float(cuenta_actualizada.monto_pagado) - monto_pagado_anterior
             if diferencia_pago > 0:
                 Transaccion.objects.create(
                     tipo='gasto',
@@ -468,6 +461,19 @@ def registrar_producto(request):
     return render(request, 'gestion/registrar_producto.html', {'form': form})
 
 
+def modificar_producto(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_productos')
+    else:
+        form = ProductoForm(instance=producto)
+    
+    return render(request, 'gestion/editar_producto.html', {'form': form, 'producto': producto})
+
+
 def registrar_compra(request):
     if request.method == 'POST':
         form = RegistroCompraForm(request.POST, request.FILES)
@@ -503,7 +509,7 @@ def registrar_presupuesto(request):
         Presupuesto, 
         ItemPresupuesto, 
         form=ItemPresupuestoForm, 
-        extra=3, 
+        extra=5, 
         can_delete=True
     )
 
@@ -533,7 +539,7 @@ def modificar_presupuesto(request, pk):
         Presupuesto, 
         ItemPresupuesto, 
         form=ItemPresupuestoForm, 
-        extra=1, 
+        extra=5, 
         can_delete=True
     )
 
@@ -564,7 +570,7 @@ def eliminar_presupuesto(request, pk):
 
 
 # =========================================================================
-# 13. REGISTRO RÁPIDO DE PROVEEDOR (MODAL FRONTEND)
+# 13. REGISTRO RÁPIDO DE PROVEEDOR Y PRODUCTO (MODAL FRONTEND)
 # =========================================================================
 
 def crear_proveedor_modal(request):
@@ -575,6 +581,30 @@ def crear_proveedor_modal(request):
             Proveedor.objects.create(nombre=nombre, telefono=telefono)
         return redirect(request.META.get("HTTP_REFERER", "registrar_producto"))
     return redirect("registrar_producto")
+
+
+def crear_producto_modal(request):
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre')
+        stock_actual = request.POST.get('stock_actual', 0)
+        stock_minimo = request.POST.get('stock_minimo', 1)
+        precio_costo = request.POST.get('precio_costo', 0)
+        porcentaje_ganancia = request.POST.get('porcentaje_ganancia', 30)
+
+        if nombre:
+            producto = Producto.objects.create(
+                nombre=nombre,
+                stock_actual=stock_actual,
+                stock_minimo=stock_minimo,
+                precio_costo=precio_costo,
+                porcentaje_ganancia=porcentaje_ganancia
+            )
+            return JsonResponse({
+                'status': 'success',
+                'id': producto.id,
+                'nombre': producto.nombre
+            })
+    return JsonResponse({'status': 'error'}, status=400)
 
 
 # =========================================================================
@@ -627,22 +657,108 @@ def detalle_trabajo(request, pk):
     }
     return render(request, 'gestion/detalle_trabajo.html', context)
 
+
 # =========================================================================
 # 15. GESTIÓN DE USUARIOS Y NIVELES
 # =========================================================================
-
-def lista_usuarios(request):
-    return render(request, 'gestion/lista_usuarios.html')
 
 def lista_usuarios(request):
     usuarios = User.objects.all().order_by('username')
     return render(request, 'gestion/lista_usuarios.html', {'usuarios': usuarios})
 
 def crear_usuario(request):
-    # Lógica para mostrar y procesar el formulario de creación
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        tipo_usuario = request.POST.get('tipo_usuario')
+
+        if username and password:
+            user = User.objects.create_user(username=username, email=email, password=password)
+            if tipo_usuario == 'admin':
+                user.is_superuser = True
+                user.is_staff = True
+                user.save()
+            return redirect('lista_usuarios')
+            
     return render(request, 'gestion/form_usuario.html')
 
 def editar_usuario(request, user_id):
     usuario = get_object_or_404(User, pk=user_id)
-    # Lógica para cargar los datos del usuario en el formulario y guardarlos
+    
+    if request.method == 'POST':
+        usuario.username = request.POST.get('username', usuario.username)
+        usuario.email = request.POST.get('email', usuario.email)
+        
+        password = request.POST.get('password')
+        if password:
+            usuario.set_password(password)
+            
+        tipo_usuario = request.POST.get('tipo_usuario')
+        if tipo_usuario == 'admin':
+            usuario.is_superuser = True
+            usuario.is_staff = True
+        else:
+            usuario.is_superuser = False
+            usuario.is_staff = False
+            
+        usuario.save()
+        return redirect('lista_usuarios')
+
     return render(request, 'gestion/form_usuario.html', {'usuario': usuario})
+
+
+# =========================================================================
+# 16. AGENDA DE VISITAS Y TRABAJOS EN CAMPO (VISTAS)
+# =========================================================================
+
+def lista_visitas(request):
+    estado_filtro = request.GET.get('estado')
+    tipo_filtro = request.GET.get('tipo')
+    
+    visitas = VisitaCampo.objects.all().order_by('-fecha_programada')
+    if estado_filtro:
+        visitas = visitas.filter(estado=estado_filtro)
+    if tipo_filtro:
+        visitas = visitas.filter(tipo=tipo_filtro)
+
+    context = {
+        'lista_visitas': visitas,
+        'estado_sel': estado_filtro,
+        'tipo_sel': tipo_filtro,
+    }
+    return render(request, 'gestion/lista_visitas.html', context)
+
+
+def registrar_visita(request):
+    if request.method == 'POST':
+        form = VisitaCampoForm(request.POST)
+        if form.is_valid():
+            visita = form.save()
+            # Si la visita cobrada genera algún ingreso inmediato, se puede registrar transacción opcionalmente
+            if visita.tipo == 'COBRADA' and visita.monto_cobro > 0:
+                Transaccion.objects.create(
+                    tipo='ingreso',
+                    concepto=f'Cobro de Visita Técnica #{visita.id} - {visita.cliente.nombre}',
+                    monto=visita.monto_cobro,
+                    categoria='Visitas Técnicas',
+                    fecha=date.today()
+                )
+            return redirect('lista_visitas')
+    else:
+        form = VisitaCampoForm()
+
+    return render(request, 'gestion/registrar_visita.html', {'form': form})
+
+
+def modificar_visita(request, pk):
+    visita = get_object_or_404(VisitaCampo, pk=pk)
+    if request.method == 'POST':
+        form = VisitaCampoForm(request.POST, instance=visita)
+        if form.is_valid():
+            form.save()
+            return redirect('lista_visitas')
+    else:
+        form = VisitaCampoForm(instance=visita)
+
+    return render(request, 'gestion/modificar_visita.html', {'form': form, 'visita': visita})

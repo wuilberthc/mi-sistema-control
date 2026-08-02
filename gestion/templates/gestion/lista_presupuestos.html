@@ -92,10 +92,10 @@
                                 <span class="badge badge-rechazado">Rechazado</span>
                             {% endif %}
                         </td>
-                        <td class="text-right" style="color: #38bdf8; font-weight: bold;">${{ p.total_presupuesto }}</td>
+                        <td class="text-right" style="color: #38bdf8; font-weight: bold;">${{ p.total_presupuesto|floatformat:2 }}</td>
                         <td>
-                            <!-- Botón de edición -->
-                            <a href="{% url 'modificar_presupuesto' p.id %}" class="btn-modificar">📝 Editar</a>
+                            <!-- Botón de edición corregido para presupuestos -->
+                            <a href="{% url 'modificar_presupuesto' p.id %}" class="btn-modificar"> ✏️ Editar</a>
                             
                             <!-- Botón de PDF -->
                             <a href="/presupuesto/{{ p.id }}/imprimir/" target="_blank" class="btn-pdf">🖨️ PDF</a>
@@ -109,7 +109,7 @@
                             <span style="color: #22c55e; font-weight: bold; font-size: 12px; margin-right: 4px;">⚙️ Obra Creada</span>
                             {% endif %}
 
-                            <!-- NUEVO BOTÓN DE ELIMINAR -->
+                            <!-- BOTÓN DE ELIMINAR -->
                             <a href="{% url 'eliminar_presupuesto' p.id %}" class="btn-eliminar" onclick="return confirm('¿Estás seguro de que deseas eliminar permanentemente el presupuesto #{{ p.id }}?');">
                                 🗑️ Eliminar
                             </a>

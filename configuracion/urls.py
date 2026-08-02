@@ -31,14 +31,16 @@ urlpatterns = [
     # =========================================================================
     path("productos/", views.vista_lista_productos, name="lista_productos"),
     path("productos/nuevo/", views.registrar_producto, name="registrar_producto"),
+    path("productos/editar/<int:pk>/", views.modificar_producto, name="modificar_producto"),
     path("proveedores/crear-rapido/", views.crear_proveedor_modal, name="crear_proveedor_modal"),
+    path("crear-producto-modal/", views.crear_producto_modal, name="crear_producto_modal"),
 
     # =========================================================================
     # 5. TRABAJOS Y OBRAS
     # =========================================================================
     path("trabajos/", views.vista_lista_trabajos, name="lista_trabajos"),
     path("trabajos/nuevo/", views.crear_trabajo, name="crear_trabajo"),
-    path("trabajos/detalle/<int:pk>/", views.detalle_trabajo, name="detalle_trabajo"), # <--- NUEVA RUTA INTEGRADA
+    path("trabajos/detalle/<int:pk>/", views.detalle_trabajo, name="detalle_trabajo"),
 
     # =========================================================================
     # 6. PRESUPUESTOS Y ERP
@@ -51,20 +53,27 @@ urlpatterns = [
     path("presupuesto/<int:presupuesto_id>/aprobar-erp/", views.procesar_aprobacion_erp, name="aprobar_erp"),
 
     # =========================================================================
-    # 7. ÓRDENES DE COMPRA
+    # 7. AGENDA DE VISITAS Y CAMPO
+    # =========================================================================
+    path("visitas/", views.lista_visitas, name="lista_visitas"),
+    path("visitas/nueva/", views.registrar_visita, name="registrar_visita"),
+    path("visitas/modificar/<int:pk>/", views.modificar_visita, name="modificar_visita"),
+
+    # =========================================================================
+    # 8. ÓRDENES DE COMPRA
     # =========================================================================
     path("compras/", views.vista_lista_compras, name="lista_compras"),
     path("compras/nueva/", views.registrar_compra, name="registrar_compra"),
 
     # =========================================================================
-    # 8. FINANZAS Y REPORTES
+    # 9. FINANZAS Y REPORTES
     # =========================================================================
     path("reporte-financiero/", views.reporte_financiero, name="reporte_financiero"),
     path("finanzas/", views.reporte_ganancias_perdidas, name="reporte_financiero_nuevo"),
     path("finanzas/nueva/", views.registrar_transaccion, name="registrar_transaccion"),
 
     # =========================================================================
-    # 9. CUENTAS POR PAGAR Y COBRAR
+    # 10. CUENTAS POR PAGAR Y COBRAR
     # =========================================================================
     path("cuentas-por-pagar/", views.lista_cuentas_por_pagar, name="cuentas_por_pagar"),
     path("cuentas-por-pagar/nueva/", views.registrar_cuenta_por_pagar, name="registrar_cxp"),
@@ -77,16 +86,16 @@ urlpatterns = [
     path("cuentas-por-cobrar/editar/<int:pk>/", views.modificar_cuenta_por_cobrar, name="modificar_cuenta_por_cobrar"),
 
     # =========================================================================
-    # 10. CONFIGURACIÓN DE LA EMPRESA
+    # 11. CONFIGURACIÓN DE LA EMPRESA
     # =========================================================================
     path("empresa/configurar/", views.editar_datos_empresa, name="datos_empresa"),
 
-  # =========================================================================
-    # 11. USUARIOS
     # =========================================================================
-    path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
-    path('usuarios/nuevo/', views.crear_usuario, name='crear_usuario'),
-    path('usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
+    # 12. USUARIOS
+    # =========================================================================
+    path("usuarios/", views.lista_usuarios, name="lista_usuarios"),
+    path("usuarios/nuevo/", views.crear_usuario, name="crear_usuario"),
+    path("usuarios/editar/<int:user_id>/", views.editar_usuario, name="editar_usuario"),
 ]
 
 if settings.MEDIA_URL and settings.MEDIA_ROOT:

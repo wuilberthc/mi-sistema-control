@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Modificar Producto</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 25px; background-color: #f8fafc; }
+        
+        .barra-titulo { background-color: #004085; color: white; padding: 15px 20px; border-radius: 6px; margin-bottom: 25px; font-weight: bold; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-regresar { background-color: #007bff; color: white; text-decoration: none; padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: bold; transition: 0.2s; border: 1px solid #0056b3; }
+        .btn-regresar:hover { background-color: #0056b3; transform: scale(1.02); }
+
+        .contenedor { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); max-width: 800px; margin: 0 auto; }
+        h2 { margin-top: 0; color: #1e293b; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        
+        /* FORMULARIO ESTILIZADO */
+        form { display: flex; flex-direction: column; gap: 20px; }
+        .grupo-campo { display: flex; flex-direction: column; gap: 6px; }
+        .grupo-campo label { font-size: 12px; font-weight: bold; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+        .grupo-campo input, .grupo-campo select, .grupo-campo textarea { padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background-color: #fff; color: #334155; font-family: sans-serif; width: 100%; box-sizing: border-box; }
+        .grupo-campo input:focus, .grupo-campo select:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.15); }
+        
+        .acciones-form { display: flex; gap: 12px; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        .btn-guardar { background-color: #16a34a; color: white; border: none; padding: 10px 22px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-guardar:hover { background-color: #15803d; }
+        .btn-cancelar { background-color: #64748b; color: white; text-decoration: none; padding: 10px 22px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; box-sizing: border-box; transition: 0.2s; }
+        .btn-cancelar:hover { background-color: #475569; }
+    </style>
+</head>
+<body>
+
+    <div class="barra-titulo">
+        <span>📦 Panel Administrativo - Modificar Producto</span>
+        <a href="javascript:history.back()" class="btn-regresar">⬅️ Regresar</a>
+    </div>
+
+    <div class="contenedor">
+        <h2>Editar: {{ producto.nombre }}</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                <div class="grupo-campo">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div style="color: #dc3545; font-size: 12px; margin-top: 4px;">{{ field.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="acciones-form">
+                <button type="submit" class="btn-guardar">💾 Guardar Cambios</button>
+                <a href="javascript:history.back()" class="btn-cancelar">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>

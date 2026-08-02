@@ -53,12 +53,13 @@
         <a href="{% url 'lista_usuarios' %}" class="menu-item"><span>👥</span> Usuarios y Niveles</a>
         <a href="{% url 'dashboard' %}" class="active"><span>🏠</span> Inicio / Resumen</a>
         <a href="{% url 'lista_clientes' %}"><span>👥</span> Control de Clientes</a>
+        <a href="{% url 'lista_visitas' %}"><span>📅</span> Agenda de Visitas</a>
         <a href="{% url 'lista_trabajos' %}"><span>🛠️</span> Trabajos y Obras</a>
         <a href="{% url 'mis_trabajos' %}"><span>👷</span> Pantalla Técnicos</a>
         <a href="{% url 'lista_productos' %}"><span>📦</span> Inventario / Stock</a>
         <a href="{% url 'lista_compras' %}"><span>🛒</span> Órdenes de Compras</a>
         <a href="{% url 'cuentas_por_pagar' %}"><span>📉</span> Cuentas por Pagar</a>
-        <a href="{% url 'lista_cuentas_por_cobrar' %}"><span>📈</span>Cuentas por Cobrar</a>
+        <a href="{% url 'lista_cuentas_por_cobrar' %}"><span>📈</span> Cuentas por Cobrar</a>
         <a href="{% url 'lista_presupuestos' %}"><span>📄</span> Presupuestos</a>
         <a href="{% url 'reporte_financiero' %}"><span>📊</span> Reporte Financiero</a>
         <a href="{% url 'datos_empresa' %}"><span>⚙️</span> Datos de mi Empresa</a>
@@ -102,12 +103,20 @@
                 </div>
                 <div class="tarjeta-icono">📄</div>
             </div>
+
+            <div class="tarjeta tarjeta-celeste">
+                <div>
+                    <div class="tarjeta-titulo">Visitas Pendientes</div>
+                    <div class="tarjeta-numero">{{ visitas_pendientes }}</div>
+                </div>
+                <div class="tarjeta-icono">📅</div>
+            </div>
         </div>
 
         <div class="seccion-titulo">Acciones Corporativas Rapidas</div>
         <div class="grid-botones">
             <a href="/presupuestos/nuevo/" class="btn-accion btn-verde">📝 Crear Nuevo Presupuesto</a>
-            <a href="/clientes/" class="btn-accion btn-azul">➕ Gestionar Clientes</a>
+            <a href="{% url 'registrar_visita' %}" class="btn-accion btn-azul">📅 Programar Visita</a>
             <a href="/reporte-financiero/" class="btn-accion btn-oscuro">📈 Balance de Ganancias</a>
         </div>
     </div>

@@ -12,6 +12,7 @@ from .models import (
     RegistroCompra,
     Trabajo,
     Transaccion,
+    VisitaCampo,
 )
 
 
@@ -196,7 +197,22 @@ class GastoObraForm(forms.ModelForm):
 class FotoTrabajoForm(forms.ModelForm):
     class Meta:
         model = FotoTrabajo
-        fields = ['foto'] # Ajusta el campo si en tu modelo tiene otro nombre (ej. 'foto')
+        fields = ['foto']
         widgets = {
             'foto': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class VisitaCampoForm(forms.ModelForm):
+    class Meta:
+        model = VisitaCampo
+        fields = ['cliente', 'fecha_programada', 'tipo', 'monto_cobro', 'estado', 'tecnico', 'observaciones']
+        widgets = {
+            'fecha_programada': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'cliente': forms.Select(attrs={'class': 'form-control'}),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
+            'monto_cobro': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0.00'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'tecnico': forms.Select(attrs={'class': 'form-control'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones...'}),
         }
